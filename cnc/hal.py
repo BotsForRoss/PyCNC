@@ -98,7 +98,7 @@
 
 # check which module to import
 try:
-    from cnc.hal_raspberry.hal import *
+    from cnc.hal_raspberry.ross_hal import *
 except ImportError:
     print("----- Hardware not detected, using virtual environment -----")
     print("----- Use M111 command to enable more detailed debug -----")
