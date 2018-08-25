@@ -311,6 +311,31 @@ def move(generator):
                  + str(round(generator.total_time_s(), 2)) + "s")
 
 
+def set_extruder_speed(id, speed):
+    """ Set the speed of an extruder
+
+    Arguments:
+        id {int} -- the ID of the extruder (e.g. ID of 3 when using T3 in gcode)
+        speed {float} -- a speed from -1 to 1 where 1 is extrude and -1 is... unextrude
+    """
+    extruder_pins = [
+        EXTRUDER_0_PWM_PIN,
+        EXTRUDER_1_PWM_PIN,
+        EXTRUDER_2_PWM_PIN,
+        EXTRUDER_3_PWM_PIN,
+        EXTRUDER_4_PWM_PIN,
+        EXTRUDER_5_PWM_PIN,
+    ]
+    pin = extruder_pins[id]
+
+    if speed == 0:
+        pwm.remove_pin(pin)
+    else:
+        # convert the -1 to 1 speed input to a duty cycle from 0 to 1, but scaled for this specific servo motor
+        duty_cycle = (1250 - 414 * speed) / 4095
+        pwm.add_pin(pin, duty_cycle)
+
+
 def join():
     """ Wait till motors work.
     """

@@ -304,6 +304,31 @@ class GMachine(object):
         """
         return self.__get_target_temperature(HEATER_BED)
 
+    def _move_extruder(self, id, duration, multiplier=1.0, reverse=False):
+        """ Move an extruder for a duration
+
+        Arguments:
+            id {int} -- the ID of the extruder (e.g. ID of 3 when using T3 in gcode)
+            duration {int} -- how long to extrude, in ms
+
+        Keyword Arguments:
+            multiplier {float} -- what to multiply the speed by, 1.0 being full (default: {1.0})
+            reverse {bool} -- True iff it should unextrude again (default: {False})
+        """
+        # TODO set some limits on this so it doesn't over-extrude and smoke the motors
+        if multiplier < 0 or multiplier > 1:
+            raise ValueError('bad multiplier')
+        if reverse:
+            multiplier = -multiplier
+        hal.set_extruder_speed(id, multiplier)
+        time.sleep(duration)  # TODO does this blocking call mess with dma?
+        hal.set_extruder_speed(id, 0)
+
+    def _move_extruder_by_gcode(self, gcode, reverse=False):
+        extruder_id = int(gcode.get('T', 0))
+        duration = gcode.get('P', 1000) / 1000.0
+        self._move_extruder(extruder_id, duration, reverse=reverse)
+
     def do_command(self, gcode):
         """ Perform action.
         :param gcode: GCode object which represent one gcode line
@@ -461,6 +486,12 @@ class GMachine(object):
             hal.join()
             p = self.position()
             answer = "X:{} Y:{} Z:{} E:{}".format(p.x, p.y, p.z, p.e)
+        elif c == 'M126':  # open valve
+            # this command is used to extrude
+            # extrusion should be handled by movement on the E axis, but this is simpler to implement
+            self._move_extruder_by_gcode(gcode)
+        elif c == 'M127':  # close valve
+            self._move_extruder_by_gcode(gcode, reverse=True)
         elif c is None:  # command not specified(ie just F was passed)
             pass
         # commands below are added just for compatibility
