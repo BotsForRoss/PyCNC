@@ -185,9 +185,6 @@ def move(generator):
     logging.info("prepared in " + str(round(pt - st, 2)) + "s, estimated "
                  + str(round(generator.total_time_s(), 2)) + "s")
 
-def set_extruder_speed(id, speed):
-    logging.info('set extruder {} to speed {:.3f}'.format(id, speed))
-
 
 def join():
     """ Wait till motors work.
