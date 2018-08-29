@@ -16,6 +16,10 @@ STEPPER_PULSES_PER_MM_Y = 100
 STEPPER_PULSES_PER_MM_Z = 400
 STEPPER_PULSES_PER_MM_E = 150
 
+# How long it takes the extruder to go from un-extruded to fully extruded
+# TODO calibrate
+EXTRUDER_RANGE = 1000  # seconds
+
 # Invert axises direction, by default(False) high level means increase of
 # position. For inverted(True) axis, high level means decrease of position.
 STEPPER_INVERTED_X = True
@@ -57,13 +61,22 @@ STEPPERS_ENABLE_PIN = 26
 STEPPER_STEP_PIN_X = 21
 STEPPER_STEP_PIN_Y = 16
 STEPPER_STEP_PIN_Z = 12
-STEPPER_STEP_PIN_E = 8
+STEPPER_STEP_PIN_E = 8  # unused in BotRoss
 
 STEPPER_DIR_PIN_X = 20
 STEPPER_DIR_PIN_Y = 19
 STEPPER_DIR_PIN_Z = 13
-STEPPER_DIR_PIN_E = 7
+STEPPER_DIR_PIN_E = 7  # unused in BotRoss
 
+# Servo motor GPIO pins
+EXTRUDER_0_PWM_PIN = 12
+EXTRUDER_1_PWM_PIN = -1
+EXTRUDER_2_PWM_PIN = -1
+EXTRUDER_3_PWM_PIN = -1
+EXTRUDER_4_PWM_PIN = -1
+EXTRUDER_5_PWM_PIN = -1
+
+# Pins for non-BotRoss hardware
 SPINDLE_PWM_PIN = 4
 FAN_PIN = 27
 EXTRUDER_HEATER_PIN = 18

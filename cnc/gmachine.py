@@ -304,6 +304,24 @@ class GMachine(object):
         """
         return self.__get_target_temperature(HEATER_BED)
 
+    def _move_extruder(self, extruder_id, delta, reverse=False):
+        """
+        Move an extruder
+
+        Arguments:
+            extruder_id {int} -- the ID of the extruder
+            delta {float} -- how far the extruder should move in units of (1 second * extruder full speed)
+
+        Keyword Arguments:
+            reverse {bool} -- True iff the extruder should un-extrude (default: {False})
+        """
+        if reverse:
+            delta = -delta
+
+        extruder = hal.get_extruder(extruder_id)
+        pos = extruder.get_position()
+        extruder.set_position(pos + delta, wait=True)  # TODO is waiting OK?
+
     def do_command(self, gcode):
         """ Perform action.
         :param gcode: GCode object which represent one gcode line
@@ -461,6 +479,16 @@ class GMachine(object):
             hal.join()
             p = self.position()
             answer = "X:{} Y:{} Z:{} E:{}".format(p.x, p.y, p.z, p.e)
+        elif c == 'M126':  # open valve
+            # this command is used to extrude
+            # extrusion should be handled by movement on the E axis, but this is simpler to implement
+            extruder_id = int(gcode.get('T', 0))
+            delta = gcode.get('P', 2)
+            self._move_extruder(extruder_id, delta)
+        elif c == 'M127':  # close valve
+            extruder_id = int(gcode.get('T', 0))
+            delta = gcode.get('P', 2)
+            self._move_extruder(extruder_id, delta, reverse=True)
         elif c is None:  # command not specified(ie just F was passed)
             pass
         # commands below are added just for compatibility

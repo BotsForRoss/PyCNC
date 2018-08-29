@@ -4,6 +4,7 @@ from cnc.hal_raspberry import rpgpio
 from cnc.pulses import *
 from cnc.config import *
 from cnc.sensors import thermistor
+from cnc.actuators.extruder import Extruder
 
 US_IN_SECONDS = 1000000
 
@@ -16,6 +17,9 @@ STEP_PIN_MASK_X = 1 << STEPPER_STEP_PIN_X
 STEP_PIN_MASK_Y = 1 << STEPPER_STEP_PIN_Y
 STEP_PIN_MASK_Z = 1 << STEPPER_STEP_PIN_Z
 STEP_PIN_MASK_E = 1 << STEPPER_STEP_PIN_E
+
+# will be populated in init()
+extruders = []
 
 
 def init():
@@ -43,6 +47,17 @@ def init():
     gpio.clear(BED_HEATER_PIN)
     gpio.clear(STEPPERS_ENABLE_PIN)
     watchdog.start()
+
+    # Also init the extruders
+    # TODO save the previous position and use that as initial position for convenience
+    extruders.extend([
+        Extruder(pwm, EXTRUDER_0_PWM_PIN, EXTRUDER_RANGE),
+        Extruder(pwm, EXTRUDER_1_PWM_PIN, EXTRUDER_RANGE),
+        Extruder(pwm, EXTRUDER_2_PWM_PIN, EXTRUDER_RANGE),
+        Extruder(pwm, EXTRUDER_3_PWM_PIN, EXTRUDER_RANGE),
+        Extruder(pwm, EXTRUDER_4_PWM_PIN, EXTRUDER_RANGE),
+        Extruder(pwm, EXTRUDER_5_PWM_PIN, EXTRUDER_RANGE)
+    ])
 
 
 def spindle_control(percent):
@@ -311,10 +326,19 @@ def move(generator):
                  + str(round(generator.total_time_s(), 2)) + "s")
 
 
+def get_extruder(id):
+    return extruders[id]
+
+
 def join():
     """ Wait till motors work.
     """
     logging.info("hal join()")
+
+    # wait till servos are done
+    for extruder in extruders:
+        extruder.join()
+
     # wait till dma works
     while dma.is_active():
         time.sleep(0.01)
