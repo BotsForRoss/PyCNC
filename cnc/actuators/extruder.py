@@ -90,6 +90,7 @@ class Extruder(object):
         self._motor.set_speed(self._speed)
         self._set_time = time.time()
         self._timer = Timer(duration, self._stop)
+        self._timer.start()
 
         # Optionally wait for the motor to stop
         if wait:
