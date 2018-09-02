@@ -16,7 +16,15 @@ watchdog = rpgpio.DMAWatchdog()
 STEP_PIN_MASK_X = 1 << STEPPER_STEP_PIN_X
 STEP_PIN_MASK_Y = 1 << STEPPER_STEP_PIN_Y
 STEP_PIN_MASK_Z = 1 << STEPPER_STEP_PIN_Z
-STEP_PIN_MASK_E = 1 << STEPPER_STEP_PIN_E
+
+extruder_pins = [
+    EXTRUDER_0_PWM_PIN,
+    EXTRUDER_1_PWM_PIN,
+    EXTRUDER_2_PWM_PIN,
+    EXTRUDER_3_PWM_PIN,
+    EXTRUDER_4_PWM_PIN,
+    EXTRUDER_5_PWM_PIN
+]
 
 # will be populated in init()
 extruders = []
@@ -28,47 +36,30 @@ def init():
     gpio.init(STEPPER_STEP_PIN_X, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPER_STEP_PIN_Y, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPER_STEP_PIN_Z, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.init(STEPPER_STEP_PIN_E, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPER_DIR_PIN_X, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPER_DIR_PIN_Y, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPER_DIR_PIN_Z, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.init(STEPPER_DIR_PIN_E, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(ENDSTOP_PIN_X, rpgpio.GPIO.MODE_INPUT_PULLUP)
     gpio.init(ENDSTOP_PIN_Y, rpgpio.GPIO.MODE_INPUT_PULLUP)
     gpio.init(ENDSTOP_PIN_Z, rpgpio.GPIO.MODE_INPUT_PULLUP)
-    gpio.init(SPINDLE_PWM_PIN, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.init(FAN_PIN, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.init(EXTRUDER_HEATER_PIN, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.init(BED_HEATER_PIN, rpgpio.GPIO.MODE_OUTPUT)
     gpio.init(STEPPERS_ENABLE_PIN, rpgpio.GPIO.MODE_OUTPUT)
-    gpio.clear(SPINDLE_PWM_PIN)
-    gpio.clear(FAN_PIN)
-    gpio.clear(EXTRUDER_HEATER_PIN)
-    gpio.clear(BED_HEATER_PIN)
     gpio.clear(STEPPERS_ENABLE_PIN)
     watchdog.start()
 
     # Also init the extruders
-    # TODO save the previous position and use that as initial position for convenience
-    extruders.extend([
-        Extruder(pwm, EXTRUDER_0_PWM_PIN, EXTRUDER_LENGTH_MM),
-        Extruder(pwm, EXTRUDER_1_PWM_PIN, EXTRUDER_LENGTH_MM),
-        Extruder(pwm, EXTRUDER_2_PWM_PIN, EXTRUDER_LENGTH_MM),
-        Extruder(pwm, EXTRUDER_3_PWM_PIN, EXTRUDER_LENGTH_MM),
-        Extruder(pwm, EXTRUDER_4_PWM_PIN, EXTRUDER_LENGTH_MM),
-        Extruder(pwm, EXTRUDER_5_PWM_PIN, EXTRUDER_LENGTH_MM)
-    ])
+    for pin in extruder_pins:
+        gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
+        gpio.clear(pin)
+        # TODO save the previous position and use that as initial position for convenience
+        extruder = Extruder(pwm, pin, EXTRUDER_LENGTH_MM)
+        extruders.append(extruder)
 
 
 def spindle_control(percent):
     """ Spindle control implementation.
     :param percent: spindle speed in percent 0..100. If 0, stop the spindle.
     """
-    logging.info("spindle control: {}%".format(percent))
-    if percent > 0:
-        pwm.add_pin(SPINDLE_PWM_PIN, percent)
-    else:
-        pwm.remove_pin(SPINDLE_PWM_PIN)
+    raise NotImplementedError("spindle does not exist on BotRoss")
 
 
 def fan_control(on_off):
@@ -76,46 +67,35 @@ def fan_control(on_off):
     Cooling fan control.
     :param on_off: boolean value if fan is enabled.
     """
-    if on_off:
-        logging.info("Fan is on")
-        gpio.set(FAN_PIN)
-    else:
-        logging.info("Fan is off")
-        gpio.clear(FAN_PIN)
+    raise NotImplementedError("fan does not exist on BotRoss")
 
 
 def extruder_heater_control(percent):
     """ Extruder heater control.
     :param percent: heater power in percent 0..100. 0 turns heater off.
     """
-    if percent > 0:
-        pwm.add_pin(EXTRUDER_HEATER_PIN, percent)
-    else:
-        pwm.remove_pin(EXTRUDER_HEATER_PIN)
+    raise NotImplementedError("extruder heater does not exist on BotRoss")
 
 
 def bed_heater_control(percent):
     """ Hot bed heater control.
     :param percent: heater power in percent 0..100. 0 turns heater off.
     """
-    if percent > 0:
-        pwm.add_pin(BED_HEATER_PIN, percent)
-    else:
-        pwm.remove_pin(BED_HEATER_PIN)
+    raise NotImplementedError("bed heater does not exist on BotRoss")
 
 
 def get_extruder_temperature():
     """ Measure extruder temperature.
     :return: temperature in Celsius.
     """
-    return thermistor.get_temperature(EXTRUDER_TEMPERATURE_SENSOR_CHANNEL)
+    raise NotImplementedError("extruder temperature sensor does not exist on BotRoss")
 
 
 def get_bed_temperature():
     """ Measure bed temperature.
     :return: temperature in Celsius.
     """
-    return thermistor.get_temperature(BED_TEMPERATURE_SENSOR_CHANNEL)
+    raise NotImplementedError("bed temperature sensor does not exist on BotRoss")
 
 
 def disable_steppers():
@@ -346,10 +326,8 @@ def deinit():
     join()
     disable_steppers()
     pwm.remove_all()
-    gpio.clear(SPINDLE_PWM_PIN)
-    gpio.clear(FAN_PIN)
-    gpio.clear(EXTRUDER_HEATER_PIN)
-    gpio.clear(BED_HEATER_PIN)
+    for pin in extruder_pins:
+        gpio.clear(pin)
     watchdog.stop()
 
 
