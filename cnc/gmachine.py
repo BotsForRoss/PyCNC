@@ -116,6 +116,25 @@ class GMachine(object):
                 or max_velocity.e > MAX_VELOCITY_MM_PER_MIN_E:
             raise GMachineException("out of maximum speed")
 
+    def _get_extruder_speed(self, delta_mm, velocity_mm_per_min):
+        """
+        Pull the E axis speed out of the delta position vector and overall speed about all axes.
+        This is also done in pulses.py, but must be repeated because extruders don't use pulses.
+
+        Arguments:
+            delta_mm {Coordinates} -- the difference in position in mm
+            velocity_mm_per_min {float} -- the speed about all axes in mm/min
+
+        Returns:
+            {float} -- the speed of the E axis only
+        """
+        distance_mm = abs(delta_mm)
+        distance_total_mm = distance_mm.length()
+        if distance_total_mm == 0:
+            return 0
+        velocity = distance_mm * (velocity_mm_per_min / distance_total_mm)
+        return velocity.e
+
     def _move_linear(self, delta, velocity):
         delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
                             1.0 / STEPPER_PULSES_PER_MM_Y,
@@ -129,7 +148,8 @@ class GMachine(object):
         gen = PulseGeneratorLinear(delta, velocity)
         self.__check_velocity(gen.max_velocity())
 
-        self._start_extruder_move(delta.e, velocity.e)
+        extruder_speed = self._get_extruder_speed(delta, velocity)
+        self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
         self._end_extruder_move()
 
@@ -247,7 +267,8 @@ class GMachine(object):
             linear_gen = PulseGeneratorLinear(linear_delta, velocity)
             self.__check_velocity(linear_gen.max_velocity())
         # do movements
-        self._start_extruder_move(delta.e, velocity.e)
+        extruder_speed = self._get_extruder_speed(delta, velocity)
+        self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
         self._end_extruder_move()
         if linear_gen is not None:
@@ -333,11 +354,6 @@ class GMachine(object):
         """
         extruder = hal.get_extruder(self._extruder_id)
         extruder.join()
-        if abs(extruder.get_position() - self._position.e) > EXTRUDER_ERROR_TOLERANCE:
-            raise GMachineException('Extruder {} failed to reach commanded position.\n'
-                                    '\tcommanded: {}\n'
-                                    '\treported:  {}'
-                                    .format(self._extruder_id, self._position.e, extruder.get_position()))
 
     def _set_extruder(self, extruder_id):
         """
