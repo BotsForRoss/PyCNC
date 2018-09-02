@@ -51,12 +51,12 @@ def init():
     # Also init the extruders
     # TODO save the previous position and use that as initial position for convenience
     extruders.extend([
-        Extruder(pwm, EXTRUDER_0_PWM_PIN, EXTRUDER_RANGE),
-        Extruder(pwm, EXTRUDER_1_PWM_PIN, EXTRUDER_RANGE),
-        Extruder(pwm, EXTRUDER_2_PWM_PIN, EXTRUDER_RANGE),
-        Extruder(pwm, EXTRUDER_3_PWM_PIN, EXTRUDER_RANGE),
-        Extruder(pwm, EXTRUDER_4_PWM_PIN, EXTRUDER_RANGE),
-        Extruder(pwm, EXTRUDER_5_PWM_PIN, EXTRUDER_RANGE)
+        Extruder(pwm, EXTRUDER_0_PWM_PIN, EXTRUDER_LENGTH_MM),
+        Extruder(pwm, EXTRUDER_1_PWM_PIN, EXTRUDER_LENGTH_MM),
+        Extruder(pwm, EXTRUDER_2_PWM_PIN, EXTRUDER_LENGTH_MM),
+        Extruder(pwm, EXTRUDER_3_PWM_PIN, EXTRUDER_LENGTH_MM),
+        Extruder(pwm, EXTRUDER_4_PWM_PIN, EXTRUDER_LENGTH_MM),
+        Extruder(pwm, EXTRUDER_5_PWM_PIN, EXTRUDER_LENGTH_MM)
     ])
 
 
@@ -271,10 +271,7 @@ def move(generator):
                 pins_to_clear |= 1 << STEPPER_DIR_PIN_Z
             elif tz < 0:
                 pins_to_set |= 1 << STEPPER_DIR_PIN_Z
-            if te > 0:
-                pins_to_clear |= 1 << STEPPER_DIR_PIN_E
-            elif te < 0:
-                pins_to_set |= 1 << STEPPER_DIR_PIN_E
+            # ignore te
             dma.add_set_clear(pins_to_set, pins_to_clear)
             continue
         pins = 0
@@ -289,8 +286,7 @@ def move(generator):
             pins |= STEP_PIN_MASK_Y
         if tz is not None:
             pins |= STEP_PIN_MASK_Z
-        if te is not None:
-            pins |= STEP_PIN_MASK_E
+        # ignore te
         if k - prev > 0:
             dma.add_delay(k - prev)
         dma.add_pulse(pins, STEPPER_PULSE_LENGTH_US)
