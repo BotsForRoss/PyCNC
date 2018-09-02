@@ -21,7 +21,6 @@ g21
 g1y1
 g1y-1
 g90
-g92x100y100z100f240
 m111
 g1x98y98z98f120
 (head should be in zero position)
