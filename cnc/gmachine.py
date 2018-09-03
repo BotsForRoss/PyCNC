@@ -51,9 +51,9 @@ class GMachine(object):
             for h in self._heaters:
                 self._heaters[h].stop()
             self._fan(False)
-        except GMachineException as e:
+        except NotImplementedError as e:
             # TODO remove references to non-existant hardware
-            logging.info('Failed to release some resources. Check if they are still supported.')
+            logging.info('Cannot release not-implemented resource')
             logging.debug(e)
         hal.deinit()
 
