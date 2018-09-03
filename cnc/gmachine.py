@@ -46,10 +46,15 @@ class GMachine(object):
     def release(self):
         """ Free all resources.
         """
-        self._spindle(0)
-        for h in self._heaters:
-            self._heaters[h].stop()
-        self._fan(False)
+        try:
+            self._spindle(0)
+            for h in self._heaters:
+                self._heaters[h].stop()
+            self._fan(False)
+        except GMachineException as e:
+            # TODO remove references to non-existant hardware
+            logging.info('Failed to release some resources. Check if they are still supported.')
+            logging.debug(e)
         hal.deinit()
 
     def reset(self):
