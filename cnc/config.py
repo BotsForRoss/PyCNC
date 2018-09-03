@@ -46,7 +46,7 @@ STEPPER_PULSE_LENGTH_US = 2
 STEPPER_MAX_ACCELERATION_MM_PER_S2 = 3000  # for all axis, mm per sec^2
 NUM_EXTRUDERS = 6
 
-# Unused mixed settings (left for compatibility)
+# Unused mixed settings (left to keep tests passing)
 SPINDLE_MAX_RPM = 10000
 EXTRUDER_MAX_TEMPERATURE = 250
 BED_MAX_TEMPERATURE = 100
@@ -66,12 +66,10 @@ STEPPERS_ENABLE_PIN = 26
 STEPPER_STEP_PIN_X = 21
 STEPPER_STEP_PIN_Y = 16
 STEPPER_STEP_PIN_Z = 12
-STEPPER_STEP_PIN_E = -1  # unused in BotRoss
 
 STEPPER_DIR_PIN_X = 20
 STEPPER_DIR_PIN_Y = 19
 STEPPER_DIR_PIN_Z = 13
-STEPPER_DIR_PIN_E = -1  # unused in BotRoss
 
 # Servo motor GPIO pins
 EXTRUDER_0_PWM_PIN = 23
@@ -80,14 +78,6 @@ EXTRUDER_2_PWM_PIN = 27
 EXTRUDER_3_PWM_PIN = 18
 EXTRUDER_4_PWM_PIN = 17
 EXTRUDER_5_PWM_PIN = 4
-
-# Pins for non-BotRoss hardware
-SPINDLE_PWM_PIN = -1
-FAN_PIN = -1
-EXTRUDER_HEATER_PIN = -1
-BED_HEATER_PIN = -1
-EXTRUDER_TEMPERATURE_SENSOR_CHANNEL = -1
-BED_TEMPERATURE_SENSOR_CHANNEL = -1
 
 ENDSTOP_PIN_X = 24
 ENDSTOP_PIN_Y = 10
@@ -107,6 +97,3 @@ INSTANT_RUN = True
 # velocity would be decreased(proportional for all axises) to fit the maximum
 # velocity.
 AUTO_VELOCITY_ADJUSTMENT = True
-
-# Automatically turn on fan when extruder is heating, boolean value.
-AUTO_FAN_ON = True
