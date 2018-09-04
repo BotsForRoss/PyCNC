@@ -315,6 +315,8 @@ def join():
     for extruder in extruders:
         extruder.join()
 
+    logging.info("\textruders joined")
+
     # wait till dma works
     while dma.is_active():
         time.sleep(0.01)
