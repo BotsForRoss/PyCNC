@@ -1,5 +1,4 @@
 import time
-import RPi.GPIO as GPIO
 
 from cnc.config import MAX_VELOCITY_MM_PER_MIN_E
 from threading import Thread
@@ -19,7 +18,7 @@ class Extruder(object):
     This tracks the position of the extruder to keep it from hitting limits. It is all time-based and not precise!
     """
 
-    def __init__(self, pin, range, initial_pos=0.0):
+    def __init__(self, gpio, pin, range, initial_pos=0.0):
         """
         Arguments:
             pin {int} -- the GPIO pin to control the extuder's servo
@@ -28,6 +27,7 @@ class Extruder(object):
         Keyword Arguments:
             initial_pos {float} -- how many mm are already extruded on init (default {0.0})
         """
+        self._gpio = gpio
         self._pin = pin
         self._range = range
         self._last_stopped_pos = initial_pos
@@ -35,10 +35,6 @@ class Extruder(object):
         self._speed = None  # in mm/second
         self._set_time = None
         self._cancel = False
-
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.LOW)
 
     def _stop(self):
         """
@@ -64,9 +60,9 @@ class Extruder(object):
         for _ in range(iterations):
             if self._cancel:
                 break
-            GPIO.output(self._pin, GPIO.HIGH)
+            self._gpio.set(self._pin)
             time.sleep(on_time)
-            GPIO.output(self._pin, GPIO.LOW)
+            self._gpio.clear(self._pin)
             time.sleep(off_time)
 
         self._last_stopped_pos = self.get_position()
@@ -130,10 +126,3 @@ class Extruder(object):
         """
         if self._thread:
             self._thread.join()
-
-    @staticmethod
-    def cleanup():
-        """
-        Clean up ALL RPi.GPIO
-        """
-        GPIO.cleanup()

@@ -48,7 +48,9 @@ def init():
     # Also init the extruders
     for pin in extruder_pins:
         # TODO save the previous position and use that as initial position for convenience
-        extruder = Extruder(pin, EXTRUDER_LENGTH_MM)
+        gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
+        gpio.clear(pin)
+        extruder = Extruder(gpio, pin, EXTRUDER_LENGTH_MM)
         extruders.append(extruder)
 
 
@@ -322,7 +324,8 @@ def deinit():
     """
     join()
     disable_steppers()
-    Extruder.cleanup()
+    for pin in extruder_pins:
+        gpio.clear(pin)
     watchdog.stop()
 
 
