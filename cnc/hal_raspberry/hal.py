@@ -10,7 +10,6 @@ US_IN_SECONDS = 1000000
 
 gpio = rpgpio.GPIO()
 dma = rpgpio.DMAGPIO()
-pwm = rpgpio.DMAPWM()
 watchdog = rpgpio.DMAWatchdog()
 
 STEP_PIN_MASK_X = 1 << STEPPER_STEP_PIN_X
@@ -48,10 +47,8 @@ def init():
 
     # Also init the extruders
     for pin in extruder_pins:
-        gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
-        gpio.clear(pin)
         # TODO save the previous position and use that as initial position for convenience
-        extruder = Extruder(pwm, pin, EXTRUDER_LENGTH_MM)
+        extruder = Extruder(pin, EXTRUDER_LENGTH_MM)
         extruders.append(extruder)
 
 
@@ -325,9 +322,7 @@ def deinit():
     """
     join()
     disable_steppers()
-    pwm.remove_all()
-    for pin in extruder_pins:
-        gpio.clear(pin)
+    Extruder.cleanup()
     watchdog.stop()
 
 
