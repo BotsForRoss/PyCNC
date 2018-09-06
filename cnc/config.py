@@ -3,20 +3,20 @@
 
 # Maximum velocity for each axis in millimeter per minute.
 # TODO measure or derive these
-MAX_VELOCITY_MM_PER_MIN_X = 3000
-MAX_VELOCITY_MM_PER_MIN_Y = 3000
-MAX_VELOCITY_MM_PER_MIN_Z = 3000
-MAX_VELOCITY_MM_PER_MIN_E = 3000
+MAX_VELOCITY_MM_PER_MIN_X = 12000
+MAX_VELOCITY_MM_PER_MIN_Y = 12000
+MAX_VELOCITY_MM_PER_MIN_Z = 600
+MAX_VELOCITY_MM_PER_MIN_E = 1500
 MIN_VELOCITY_MM_PER_MIN = 1
 # Average velocity for endstop calibration procedure
 CALIBRATION_VELOCITY_MM_PER_MIN = 300
 
 # Stepper motors steps per millimeter for each axis.
 # TODO measure or derive these
-STEPPER_PULSES_PER_MM_X = 1
-STEPPER_PULSES_PER_MM_Y = 1
-STEPPER_PULSES_PER_MM_Z = 1
-STEPPER_PULSES_PER_MM_E = 1
+STEPPER_PULSES_PER_MM_X = 100
+STEPPER_PULSES_PER_MM_Y = 100
+STEPPER_PULSES_PER_MM_Z = 100
+STEPPER_PULSES_PER_MM_E = 100
 
 # Invert axises direction, by default(False) high level means increase of
 # position. For inverted(True) axis, high level means decrease of position.
@@ -35,9 +35,9 @@ ENDSTOP_INVERTED_Z = True
 
 # Workplace physical size.
 # TODO measure these
-TABLE_SIZE_X_MM = 200000000
-TABLE_SIZE_Y_MM = 200000000
-TABLE_SIZE_Z_MM = 200000000
+TABLE_SIZE_X_MM = 200
+TABLE_SIZE_Y_MM = 200
+TABLE_SIZE_Z_MM = 220
 EXTRUDER_LENGTH_MM = 50
 
 # Mixed settings.
