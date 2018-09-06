@@ -278,7 +278,7 @@ class GMachine(object):
         """
         extruder = hal.get_extruder(self._extruder_id)
         pos = extruder.get_position()
-        extruder.set_position(pos + delta, speed / 60.0)
+        extruder.set_position(pos + delta, speed=speed / 60.0)
 
     def _end_extruder_move(self):
         """
