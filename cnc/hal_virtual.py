@@ -8,6 +8,23 @@ from cnc.config import *
     It checks PulseGenerator with some tests.
 """
 
+class VirtualExtruder(object):
+    def __init__(self):
+        self._pos = 0
+
+    def get_position(self):
+        return self._pos
+
+    def set_position(self, position, speed=1, wait=False):
+        logging.info('set extruder to position {} at speed {}'.format(position, speed))
+        self._pos = position
+
+    def join(self):
+        pass
+
+
+extruders = [VirtualExtruder() for i in range(NUM_EXTRUDERS)]
+
 
 def init():
     """ Initialize GPIO pins and machine itself.
@@ -184,6 +201,10 @@ def move(generator):
     logging.debug("Moved {}, {}, {}, {} iterations".format(ix, iy, iz, ie))
     logging.info("prepared in " + str(round(pt - st, 2)) + "s, estimated "
                  + str(round(generator.total_time_s(), 2)) + "s")
+
+
+def get_extruder(id):
+    return extruders[id]
 
 
 def join():

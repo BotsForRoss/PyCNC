@@ -1,6 +1,7 @@
 import time
 
 from cnc.actuators.servo_motor import ServoMotor
+from cnc.config import MAX_VELOCITY_MM_PER_MIN_E
 from threading import Timer
 
 
@@ -15,20 +16,16 @@ class Extruder(object):
         Arguments:
             pwm {DMAPWM} -- a DMAPWM object
             pin {int} -- the GPIO pin to control the extuder's servo
-            range {float} -- the number of seconds it takes the extruder to go from un-extruded to fully extruded when
-                moving at full speed
+            range {float} -- the range of the extruder in mm
 
         Keyword Arguments:
-            initial_pos {float} -- the current position of the servo motor in seconds, where position is measured by
-                how long the extruder has been running at full speed from a fully unextruded position. (default: {0})
-                i.e. initial_pos=0 means fully un-extruded,
-                     initial_pos=range means fully extruded
+            initial_pos {float} -- how many mm are already extruded on init (default {0.0})
         """
         self._motor = ServoMotor(pwm, pin)
         self._range = range
         self._last_stopped_pos = initial_pos
         self._timer = None
-        self._speed = None
+        self._speed = None  # in mm/second
         self._set_time = None
 
     def _stop(self):
@@ -41,28 +38,26 @@ class Extruder(object):
 
     def get_position(self):
         """
-        Get the current position of the extruder in seconds (see __init__ for why seconds)
+        Get the current position of the extruder
 
         Returns:
-            float -- how far from the extruder is from the fully un-extruded position, in units of (1 second * extruder
-                full speed)
+            float -- how far from the extruder is from the fully un-extruded position, in mm
         """
         if self._timer:
             distance_moved = self._speed * (time.time() - self._set_time)
             return self._last_stopped_pos + distance_moved
         return self._last_stopped_pos
 
-    def set_position(self, position, speed=1.0, wait=False):
+    def set_position(self, position, speed=MAX_VELOCITY_MM_PER_MIN_E / 60.0, wait=False):
         """
         Command the extruder to go to an approximate position.
         The extruder's GPIO pin must already be initialized.
 
         Arguments:
-            position {float} -- how far from the fully un-extruded position the extruder should reach, in units of
-                (1 second * extruder full speed)
+            position {float} -- how far from the fully un-extruded position the extruder should reach, in mm
 
         Keyword Arguments:
-            speed {float} -- The speed to travel at, where 0 is stopped and 1 is full (default: {1.0})
+            speed {float} -- The speed to travel at, in mm/s (default: {max speed})
             wait {bool} -- True iff this function should block until the motor stops (default: {False})
         """
         # Limit the position to a valid range
@@ -87,7 +82,7 @@ class Extruder(object):
         duration = delta / speed
 
         # Set the speed and set a timer for when to stop
-        self._motor.set_speed(self._speed)
+        self._motor.set_speed(self._speed / (MAX_VELOCITY_MM_PER_MIN_E * 60.0))
         self._set_time = time.time()
         self._timer = Timer(duration, self._stop)
         self._timer.start()

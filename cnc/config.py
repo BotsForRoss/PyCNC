@@ -16,10 +16,6 @@ STEPPER_PULSES_PER_MM_Y = 100
 STEPPER_PULSES_PER_MM_Z = 400
 STEPPER_PULSES_PER_MM_E = 150
 
-# How long it takes the extruder to go from un-extruded to fully extruded
-# TODO calibrate
-EXTRUDER_RANGE = 1000  # seconds
-
 # Invert axises direction, by default(False) high level means increase of
 # position. For inverted(True) axis, high level means decrease of position.
 STEPPER_INVERTED_X = True
@@ -38,6 +34,7 @@ ENDSTOP_INVERTED_Z = False  # Auto leveler
 TABLE_SIZE_X_MM = 200
 TABLE_SIZE_Y_MM = 200
 TABLE_SIZE_Z_MM = 220
+EXTRUDER_LENGTH_MM = 50
 
 # Mixed settings.
 STEPPER_PULSE_LENGTH_US = 2
@@ -52,6 +49,7 @@ EXTRUDER_PID = {"P": 0.059161177519,
 BED_PID = {"P": 0.226740848076,
            "I": 0.00323956215053,
            "D": 0.323956215053}
+NUM_EXTRUDERS = 6
 
 # -----------------------------------------------------------------------------
 # Pins configuration.

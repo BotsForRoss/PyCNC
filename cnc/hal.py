@@ -125,6 +125,8 @@ if 'calibrate' not in locals():
     raise NotImplementedError("hal.calibrate() not implemented")
 if 'move' not in locals():
     raise NotImplementedError("hal.move() not implemented")
+if 'get_extruder' not in locals():
+    raise NotImplementedError("hal.get_extruder() not implemented")
 if 'join' not in locals():
     raise NotImplementedError("hal.join() not implemented")
 if 'deinit' not in locals():

@@ -9,6 +9,10 @@ from cnc.enums import *
 from cnc.watchdog import *
 
 
+# how different the extruder's reported position and commanded position are allowed to be before raising an error
+EXTRUDER_ERROR_TOLERANCE = 5  # mm
+
+
 class GMachineException(Exception):
     """ Exceptions while processing gcode line.
     """
@@ -34,6 +38,7 @@ class GMachine(object):
         self._plane = None
         self._fan_state = False
         self._heaters = dict()
+        self._extruder_id = 0
         self.reset()
         hal.init()
         self.watchdog = HardwareWatchdog()
@@ -111,6 +116,25 @@ class GMachine(object):
                 or max_velocity.e > MAX_VELOCITY_MM_PER_MIN_E:
             raise GMachineException("out of maximum speed")
 
+    def _get_extruder_speed(self, delta_mm, velocity_mm_per_min):
+        """
+        Pull the E axis speed out of the delta position vector and overall speed about all axes.
+        This is also done in pulses.py, but must be repeated because extruders don't use pulses.
+
+        Arguments:
+            delta_mm {Coordinates} -- the difference in position in mm
+            velocity_mm_per_min {float} -- the speed about all axes in mm/min
+
+        Returns:
+            {float} -- the speed of the E axis only
+        """
+        distance_mm = abs(delta_mm)
+        distance_total_mm = distance_mm.length()
+        if distance_total_mm == 0:
+            return 0
+        velocity = distance_mm * (velocity_mm_per_min / distance_total_mm)
+        return velocity.e
+
     def _move_linear(self, delta, velocity):
         delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
                             1.0 / STEPPER_PULSES_PER_MM_Y,
@@ -123,7 +147,12 @@ class GMachine(object):
         logging.info("Moving linearly {}".format(delta))
         gen = PulseGeneratorLinear(delta, velocity)
         self.__check_velocity(gen.max_velocity())
+
+        extruder_speed = self._get_extruder_speed(delta, velocity)
+        self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
+        self._end_extruder_move()
+
         # save position
         self._position = self._position + delta
 
@@ -238,7 +267,10 @@ class GMachine(object):
             linear_gen = PulseGeneratorLinear(linear_delta, velocity)
             self.__check_velocity(linear_gen.max_velocity())
         # do movements
+        extruder_speed = self._get_extruder_speed(delta, velocity)
+        self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
+        self._end_extruder_move()
         if linear_gen is not None:
             hal.move(linear_gen)
         # save position
@@ -304,23 +336,37 @@ class GMachine(object):
         """
         return self.__get_target_temperature(HEATER_BED)
 
-    def _move_extruder(self, extruder_id, delta, reverse=False):
+    def _start_extruder_move(self, delta, speed):
         """
-        Move an extruder
+        Start moving the current extruder asynchronously
 
         Arguments:
-            extruder_id {int} -- the ID of the extruder
-            delta {float} -- how far the extruder should move in units of (1 second * extruder full speed)
-
-        Keyword Arguments:
-            reverse {bool} -- True iff the extruder should un-extrude (default: {False})
+            delta {float} -- the difference in position, in mm
+            speed {float} -- the speed to move the extruder, in mm/minute
         """
-        if reverse:
-            delta = -delta
-
-        extruder = hal.get_extruder(extruder_id)
+        extruder = hal.get_extruder(self._extruder_id)
         pos = extruder.get_position()
-        extruder.set_position(pos + delta, wait=True)  # TODO is waiting OK?
+        extruder.set_position(pos + delta, speed / 60.0)
+
+    def _end_extruder_move(self):
+        """
+        Wait for the current extruder to stop moving
+        """
+        extruder = hal.get_extruder(self._extruder_id)
+        extruder.join()
+
+    def _set_extruder(self, extruder_id):
+        """
+        Change extruders
+
+        Arguments:
+            extruder_id {int} -- the id of the extruder from 0 to NUM_EXTRUDERS
+        """
+        if extruder_id < 0 or extruder_id >= NUM_EXTRUDERS:
+            raise ValueError('invalid extruder id {}'.format(extruder_id))
+        extruder = hal.get_extruder(extruder_id)
+        self._position.e = extruder.get_position()
+        self._extruder_id = extruder_id
 
     def do_command(self, gcode):
         """ Perform action.
@@ -410,21 +456,24 @@ class GMachine(object):
             if not hal.calibrate(*axises):
                 raise GMachineException("failed to calibrate")
         elif c == 'G53':  # switch to machine coords
-            self._local = Coordinates(0.0, 0.0, 0.0, 0.0)
+            raise GMachineException('Not supported')
+            # TODO not sure what local/machine coordinates mean and how to handle this with multiple extruders
+            # self._local = Coordinates(0.0, 0.0, 0.0, 0.0)
         elif c == 'G90':  # switch to absolute coords
             self._absoluteCoordinates = True
         elif c == 'G91':  # switch to relative coords
             self._absoluteCoordinates = False
         elif c == 'G92':  # switch to local coords
-            if gcode.has_coordinates():
-                self._local = self._position - gcode.coordinates(
-                    Coordinates(self._position.x - self._local.x,
-                                self._position.y - self._local.y,
-                                self._position.z - self._local.z,
-                                self._position.e - self._local.e),
-                    self._convertCoordinates)
-            else:
-                self._local = self._position
+            raise GMachineException('Not supported')
+            # if gcode.has_coordinates():
+            #     self._local = self._position - gcode.coordinates(
+            #         Coordinates(self._position.x - self._local.x,
+            #                     self._position.y - self._local.y,
+            #                     self._position.z - self._local.z,
+            #                     self._position.e - self._local.e),
+            #         self._convertCoordinates)
+            # else:
+            #     self._local = self._position
         elif c == 'M3':  # spindle on
             spindle_rpm = gcode.get('S', self._spindle_rpm)
             if spindle_rpm < 0 or spindle_rpm > SPINDLE_MAX_RPM:
@@ -479,16 +528,8 @@ class GMachine(object):
             hal.join()
             p = self.position()
             answer = "X:{} Y:{} Z:{} E:{}".format(p.x, p.y, p.z, p.e)
-        elif c == 'M126':  # open valve
-            # this command is used to extrude
-            # extrusion should be handled by movement on the E axis, but this is simpler to implement
-            extruder_id = int(gcode.get('T', 0))
-            delta = gcode.get('P', 2)
-            self._move_extruder(extruder_id, delta)
-        elif c == 'M127':  # close valve
-            extruder_id = int(gcode.get('T', 0))
-            delta = gcode.get('P', 2)
-            self._move_extruder(extruder_id, delta, reverse=True)
+        elif c == 'T':  # select tool (extruder)
+            self._set_extruder(int(gcode.get('T')))
         elif c is None:  # command not specified(ie just F was passed)
             pass
         # commands below are added just for compatibility
