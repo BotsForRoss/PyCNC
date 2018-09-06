@@ -5,9 +5,7 @@ n1 g1 x1 y1 z1 ; check if comments is ok
 g1(check if inline comments work)x2y2(two times)z2
 (or on separated line)
 ; or like this
-m3s04000
 g4 p0.5
-m5
 f500
 g91
 g20
