@@ -52,8 +52,8 @@ class TestGMachine(unittest.TestCase):
         m = GMachine()
         m.do_command(GCode.parse_line("G0X10Y10Z11"))
         self.assertEqual(m.position(), Coordinates(10, 10, 11, 0))
-        m.do_command(GCode.parse_line("G0X3Y2Z1E-2"))
-        self.assertEqual(m.position(), Coordinates(3, 2, 1, -2))
+        m.do_command(GCode.parse_line("G0X3Y2Z1E2"))
+        self.assertEqual(m.position(), Coordinates(3, 2, 1, 2))
         m.do_command(GCode.parse_line("G1X1Y2Z3E4"))
         self.assertEqual(m.position(), Coordinates(1, 2, 3, 4))
         self.assertRaises(GMachineException,
@@ -80,7 +80,7 @@ class TestGMachine(unittest.TestCase):
         m.do_command(GCode.parse_line("G1Z100F"
                                       + str(MAX_VELOCITY_MM_PER_MIN_Z)))
         m.do_command(GCode.parse_line("G1E100F"
-                                      + str(MAX_VELOCITY_MM_PER_MIN_E)))
+                                      + str(m._get_extruder_max_speed())))
         self.assertRaises(GMachineException,
                           m.do_command, GCode.parse_line("G1X0F999999"))
         s = "G1X0F" + str(MAX_VELOCITY_MM_PER_MIN_X + 1)
@@ -89,7 +89,7 @@ class TestGMachine(unittest.TestCase):
         self.assertRaises(GMachineException, m.do_command, GCode.parse_line(s))
         s = "G1Z0F" + str(MAX_VELOCITY_MM_PER_MIN_Z + 1)
         self.assertRaises(GMachineException, m.do_command, GCode.parse_line(s))
-        s = "G1E0F" + str(MAX_VELOCITY_MM_PER_MIN_E + 1)
+        s = "G1E0F" + str(m._get_extruder_max_speed() + 1)
         self.assertRaises(GMachineException, m.do_command, GCode.parse_line(s))
         PulseGenerator.AUTO_VELOCITY_ADJUSTMENT = True
         m.do_command(GCode.parse_line("G1X10Y10Z10F9999999999999999999"))

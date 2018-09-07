@@ -11,7 +11,7 @@ class TestPulses(unittest.TestCase):
         self.v = min(MAX_VELOCITY_MM_PER_MIN_X,
                      MAX_VELOCITY_MM_PER_MIN_Y,
                      MAX_VELOCITY_MM_PER_MIN_Z,
-                     MAX_VELOCITY_MM_PER_MIN_E)
+                     1)
 
     def tearDown(self):
         pass

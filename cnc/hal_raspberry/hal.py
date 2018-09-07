@@ -17,15 +17,6 @@ STEP_PIN_MASK_X = 1 << STEPPER_STEP_PIN_X
 STEP_PIN_MASK_Y = 1 << STEPPER_STEP_PIN_Y
 STEP_PIN_MASK_Z = 1 << STEPPER_STEP_PIN_Z
 
-extruder_pins = [
-    EXTRUDER_0_PWM_PIN,
-    EXTRUDER_1_PWM_PIN,
-    EXTRUDER_2_PWM_PIN,
-    EXTRUDER_3_PWM_PIN,
-    EXTRUDER_4_PWM_PIN,
-    EXTRUDER_5_PWM_PIN
-]
-
 # will be populated in init()
 extruders = []
 
@@ -47,11 +38,13 @@ def init():
     watchdog.start()
 
     # Also init the extruders
-    for pin in extruder_pins:
+    for extruder_config in EXTRUDER_CONFIG:
+        pin = extruder_config['pin']
         gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
         gpio.clear(pin)
         # TODO save the previous position and use that as initial position for convenience
-        extruder = Extruder(pwm, pin, EXTRUDER_LENGTH_MM)
+        extruder = Extruder(pwm, pin, EXTRUDER_LENGTH_MM, extruder_config['duty_cycle_range'],
+                            extruder_config['max_speed'] / 60.0)
         extruders.append(extruder)
 
 
@@ -326,8 +319,8 @@ def deinit():
     join()
     disable_steppers()
     pwm.remove_all()
-    for pin in extruder_pins:
-        gpio.clear(pin)
+    for extruder_config in EXTRUDER_CONFIG:
+        gpio.clear(extruder_config['pin'])
     watchdog.stop()
 
 

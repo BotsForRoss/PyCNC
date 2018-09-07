@@ -9,10 +9,6 @@ from cnc.enums import *
 from cnc.watchdog import *
 
 
-# how different the extruder's reported position and commanded position are allowed to be before raising an error
-EXTRUDER_ERROR_TOLERANCE = 5  # mm
-
-
 class GMachineException(Exception):
     """ Exceptions while processing gcode line.
     """
@@ -35,9 +31,10 @@ class GMachine(object):
         self._absoluteCoordinates = 0
         self._plane = None
         self._extruder_id = 0
-        self.reset()
         hal.init()
         self.watchdog = HardwareWatchdog()
+
+        self.reset()
 
     def release(self):
         """ Free all resources.
@@ -50,7 +47,7 @@ class GMachine(object):
         self._velocity = min(MAX_VELOCITY_MM_PER_MIN_X,
                              MAX_VELOCITY_MM_PER_MIN_Y,
                              MAX_VELOCITY_MM_PER_MIN_Z,
-                             MAX_VELOCITY_MM_PER_MIN_E)
+                             self._get_extruder_max_speed())
         self._local = Coordinates(0.0, 0.0, 0.0, 0.0)
         self._convertCoordinates = 1.0
         self._absoluteCoordinates = True
@@ -59,8 +56,8 @@ class GMachine(object):
     def __check_delta(self, delta):
         pos = self._position + delta
         if not pos.is_in_aabb(Coordinates(0.0, 0.0, 0.0, 0.0),
-                              Coordinates(TABLE_SIZE_X_MM, TABLE_SIZE_Y_MM,
-                                          TABLE_SIZE_Z_MM, 0)):
+                Coordinates(TABLE_SIZE_X_MM, TABLE_SIZE_Y_MM, TABLE_SIZE_Z_MM, 0)) or \
+                pos.e < 0 or pos.e > EXTRUDER_LENGTH_MM:
             raise GMachineException("out of effective area")
 
     # noinspection PyMethodMayBeStatic
@@ -68,8 +65,24 @@ class GMachine(object):
         if max_velocity.x > MAX_VELOCITY_MM_PER_MIN_X \
                 or max_velocity.y > MAX_VELOCITY_MM_PER_MIN_Y \
                 or max_velocity.z > MAX_VELOCITY_MM_PER_MIN_Z \
-                or max_velocity.e > MAX_VELOCITY_MM_PER_MIN_E:
+                or max_velocity.e > self._get_extruder_max_speed():
             raise GMachineException("out of maximum speed")
+
+    def _get_extruder(self):
+        """
+        Returns:
+            Extruder -- the current extruder
+        """
+
+        return hal.get_extruder(self._extruder_id)
+
+    def _get_extruder_max_speed(self):
+        """
+        Returns:
+            float -- the max speed of the current extruder in mm/min
+        """
+
+        return self._get_extruder().get_max_speed() * 60.0
 
     def _get_extruder_speed(self, delta_mm, velocity_mm_per_min):
         """
@@ -278,7 +291,7 @@ class GMachine(object):
         """
         extruder = hal.get_extruder(self._extruder_id)
         pos = extruder.get_position()
-        extruder.set_position(pos + delta, speed / 60.0)
+        extruder.set_position(pos + delta, speed=speed / 60.0)
 
     def _end_extruder_move(self):
         """
@@ -294,7 +307,7 @@ class GMachine(object):
         Arguments:
             extruder_id {int} -- the id of the extruder from 0 to NUM_EXTRUDERS
         """
-        if extruder_id < 0 or extruder_id >= NUM_EXTRUDERS:
+        if extruder_id < 0 or extruder_id >= len(EXTRUDER_CONFIG):
             raise ValueError('invalid extruder id {}'.format(extruder_id))
         extruder = hal.get_extruder(extruder_id)
         self._position.e = extruder.get_position()
@@ -334,7 +347,7 @@ class GMachine(object):
             vl = max(MAX_VELOCITY_MM_PER_MIN_X,
                      MAX_VELOCITY_MM_PER_MIN_Y,
                      MAX_VELOCITY_MM_PER_MIN_Z,
-                     MAX_VELOCITY_MM_PER_MIN_E)
+                     self._get_extruder_max_speed())
             l = delta.length()
             if l > 0:
                 proportion = abs(delta) / l
@@ -351,7 +364,7 @@ class GMachine(object):
                     if v < vl:
                         vl = v
                 if proportion.e > 0:
-                    v = int(MAX_VELOCITY_MM_PER_MIN_E / proportion.e)
+                    v = int(self._get_extruder_max_speed() / proportion.e)
                     if v < vl:
                         vl = v
             self._move_linear(delta, vl)
