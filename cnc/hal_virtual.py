@@ -1,6 +1,7 @@
 from __future__ import division
 import time
 
+from cnc.actuators.extruder import Extruder
 from cnc.pulses import *
 from cnc.config import *
 
@@ -8,22 +9,23 @@ from cnc.config import *
     It checks PulseGenerator with some tests.
 """
 
-class VirtualExtruder(object):
-    def __init__(self):
-        self._pos = 0
 
-    def get_position(self):
-        return self._pos
-
-    def set_position(self, position, speed=1, wait=False):
-        logging.info('set extruder to position {} at speed {}'.format(position, speed))
-        self._pos = position
-
-    def join(self):
+class MockGPIO:
+    def set(self, pin):
         pass
 
+    def clear(self, pin):
+        pass
 
-extruders = [VirtualExtruder() for i in range(NUM_EXTRUDERS)]
+extruders = [
+    Extruder(
+        MockGPIO(),
+        config['pin'],
+        EXTRUDER_LENGTH_MM,
+        config['duty_cycle_range'],
+        config['max_speed'] / 60.0
+    ) for config in EXTRUDER_CONFIG
+]
 
 
 def init():

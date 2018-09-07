@@ -9,10 +9,6 @@ from cnc.enums import *
 from cnc.watchdog import *
 
 
-# how different the extruder's reported position and commanded position are allowed to be before raising an error
-EXTRUDER_ERROR_TOLERANCE = 5  # mm
-
-
 class GMachineException(Exception):
     """ Exceptions while processing gcode line.
     """
@@ -35,9 +31,10 @@ class GMachine(object):
         self._absoluteCoordinates = 0
         self._plane = None
         self._extruder_id = 0
-        self.reset()
         hal.init()
         self.watchdog = HardwareWatchdog()
+
+        self.reset()
 
     def release(self):
         """ Free all resources.
@@ -59,8 +56,8 @@ class GMachine(object):
     def __check_delta(self, delta):
         pos = self._position + delta
         if not pos.is_in_aabb(Coordinates(0.0, 0.0, 0.0, 0.0),
-                              Coordinates(TABLE_SIZE_X_MM, TABLE_SIZE_Y_MM,
-                                          TABLE_SIZE_Z_MM, 0)):
+                Coordinates(TABLE_SIZE_X_MM, TABLE_SIZE_Y_MM, TABLE_SIZE_Z_MM, 0)) or \
+                pos.e < 0 or pos.e > EXTRUDER_LENGTH_MM:
             raise GMachineException("out of effective area")
 
     # noinspection PyMethodMayBeStatic

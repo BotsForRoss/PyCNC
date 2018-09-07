@@ -66,9 +66,6 @@ class PulseGenerator(object):
         if velocity_mm_sec.z * SECONDS_IN_MINUTE > MAX_VELOCITY_MM_PER_MIN_Z:
             k = min(k, MAX_VELOCITY_MM_PER_MIN_Z
                     / velocity_mm_sec.z / SECONDS_IN_MINUTE)
-        if velocity_mm_sec.e * SECONDS_IN_MINUTE > MAX_VELOCITY_MM_PER_MIN_E:
-            k = min(k, MAX_VELOCITY_MM_PER_MIN_E
-                    / velocity_mm_sec.e / SECONDS_IN_MINUTE)
         if k != 1.0:
             logging.warning("Out of speed, multiply velocity by {}".format(k))
         return velocity_mm_sec * k

@@ -40,15 +40,17 @@ class Extruder(object):
         self._set_time = None
         self._cancel = False
 
+    def _is_running(self):
+        return self._thread and self._thread.is_alive()
+
     def _stop(self):
         """
         Stop the servo motor and update the position
         """
-        if self._thread:
+        if self._is_running():
             self._cancel = True
             self._thread.join()
             self._cancel = False
-            self._thread = None
 
     def _run(self, speed, duration):
         """
@@ -82,8 +84,8 @@ class Extruder(object):
         on_time = duty_cycle * _PERIOD
         off_time = _PERIOD - on_time
 
-        iterations = int(duration / _PERIOD)
-        for _ in range(iterations):
+        start_time = time.time()
+        while time.time() + _PERIOD < start_time + duration:
             if self._cancel:
                 break
             self._gpio.set(self._pin)
@@ -100,7 +102,7 @@ class Extruder(object):
         Returns:
             float -- how far from the extruder is from the fully un-extruded position, in mm
         """
-        if self._thread:
+        if self._is_running():
             distance_moved = self._speed * (time.time() - self._set_time)
             return self._last_stopped_pos + distance_moved
         return self._last_stopped_pos
@@ -109,6 +111,7 @@ class Extruder(object):
         """
         Command the extruder to go to an approximate position.
         The extruder's GPIO pin must already be initialized.
+        The position will be clamped into a valid range.
 
         Arguments:
             position {float} -- how far from the fully un-extruded position the extruder should reach, in mm
@@ -118,14 +121,16 @@ class Extruder(object):
             wait {bool} -- True iff this function should block until the motor stops (default: {False})
 
         Raises:
-            ValueError -- if the set position is out of the range of the extruder
+            ValueError -- if the magnitude of speed is greater than the max speed for this extruder
         """
         # Limit the position to a valid range
-        if position < 0 or position > self._range:
-            raise ValueError('extruder position out of bounds')
+        if position < 0:
+            position = 0
+        if position > self._range:
+            position = self._range
 
         # If the extruder is already moving, stop it
-        if self._thread:
+        if self._is_running():
             self._stop()
 
         if speed == 0:
@@ -151,7 +156,7 @@ class Extruder(object):
         """
         Wait for the extruder to stop, if it is moving
         """
-        if self._thread:
+        if self._is_running():
             self._thread.join()
 
     def get_max_speed(self):
