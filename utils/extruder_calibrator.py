@@ -8,10 +8,13 @@ from threading import Thread
 
 gpio = rpgpio.GPIO()
 RANGE = 10  # number of seconds max to run one step of calibration
-INCREMENT = .01
+INCREMENT = 1.0
 
 
-def prompt_duty_cycle(duty_cycle_range):
+duty_cycle_range = (0, 100)
+
+
+def prompt_duty_cycle():
     return input('duty cycle: ({:0.4f}, {:0.4f}). Continue, (s)top, (r)everse, (i)ncrease delta, or (d)ecrease delta.'
         .format(duty_cycle_range[0], duty_cycle_range[1]))
 
@@ -33,7 +36,7 @@ def calibrate_direction(extruder, reverse=False):
         extruder.set_position(end, 1)
 
         # process input
-        prompt = prompt_duty_cycle(extruder._duty_cycle_range)
+        prompt = prompt_duty_cycle()
         if prompt == 's':  # stop
             extruder._stop()
             break
@@ -51,12 +54,14 @@ def calibrate_direction(extruder, reverse=False):
 
         # set next duty cycle range
         if reverse:
-            extruder._duty_cycle_range = (extruder._duty_cycle_range[0] + delta, extruder._duty_cycle_range[1])
+            next_range = (duty_cycle_range[0] + delta, duty_cycle_range[1])
         else:
-            extruder._duty_cycle_range = (extruder._duty_cycle_range[0], extruder._duty_cycle_range[1] + delta)
+            next_range = (duty_cycle_range[0], duty_cycle_range[1] + delta)
+        extruder._motor._duty_cycle_mid = (next_range[0] + next_range[1]) / 2.0
+        extruder._motor._duty_cycle_delta = (next_range[1] - next_range[0]) / 2.0
 
 def calibrate(pin):
-    extruder = Extruder(gpio, pin, RANGE, (0, 1), 1)
+    extruder = Extruder(gpio, pin, RANGE, duty_cycle_range, 1)
 
     # calibrate for reverse direction (min duty cycle)
     print('calibrating min duty cycle')
@@ -66,7 +71,7 @@ def calibrate(pin):
     print('calibrating max duty cycle')
     calibrate_direction(extruder, reverse=False)
 
-    print('final duty cycle range: ({:0.4f}, {:0.4f})'.format(extruder._duty_cycle_range[0], extruder._duty_cycle_range[1]))
+    print('final duty cycle range: ({:0.4f}, {:0.4f})'.format(duty_cycle_range[0], duty_cycle_range[1]))
 
 
 if __name__ == '__main__':
