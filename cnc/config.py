@@ -46,7 +46,7 @@ EXTRUDER_CONFIG = [
     {
         'pin': 23,
         'max_speed': 1500,  # mm/min
-        'duty_cycle_range': (2, 12)
+        'duty_cycle_range': (4, 20)
     },
     {
         'pin': 22,
