@@ -15,6 +15,10 @@ except NameError:
     # noinspection PyShadowingBuiltins
     raw_input = input
 
+# make more Windows compatible (at least for virtual hal)
+if 'HOME' not in os.environ:
+    os.environ['HOME'] = os.environ['HOMEPATH']
+
 # configure history file for interactive mode
 history_file = os.path.join(os.environ['HOME'], '.pycnc_history')
 try:
