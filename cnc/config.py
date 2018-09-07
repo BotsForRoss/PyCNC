@@ -6,7 +6,6 @@
 MAX_VELOCITY_MM_PER_MIN_X = 12000
 MAX_VELOCITY_MM_PER_MIN_Y = 12000
 MAX_VELOCITY_MM_PER_MIN_Z = 600
-MAX_VELOCITY_MM_PER_MIN_E = 1500
 MIN_VELOCITY_MM_PER_MIN = 1
 # Average velocity for endstop calibration procedure
 CALIBRATION_VELOCITY_MM_PER_MIN = 300
@@ -41,10 +40,40 @@ TABLE_SIZE_Z_MM = 220
 EXTRUDER_LENGTH_MM = 50
 
 # Mixed settings.
-# TODO what are these stepper settings?
 STEPPER_PULSE_LENGTH_US = 2
 STEPPER_MAX_ACCELERATION_MM_PER_S2 = 3000  # for all axis, mm per sec^2
-NUM_EXTRUDERS = 6
+EXTRUDER_CONFIG = [
+    {
+        'pin': 23,
+        'max_speed': 1500,  # mm/min
+        'duty_cycle_range': (.02, .12)
+    },
+    {
+        'pin': 22,
+        'max_speed': 1500,
+        'duty_cycle_range': (.02, .12)  # TODO calibrate
+    },
+    {
+        'pin': 27,
+        'max_speed': 1500,
+        'duty_cycle_range': (.02, .12)  # TODO calibrate
+    },
+    {
+        'pin': 18,
+        'max_speed': 1500,
+        'duty_cycle_range': (.02, .12)  # TODO calibrate
+    },
+    {
+        'pin': 17,
+        'max_speed': 1500,
+        'duty_cycle_range': (.02, .12)  # TODO calibrate
+    },
+    {
+        'pin': 4,
+        'max_speed': 1500,
+        'duty_cycle_range': (.02, .12)  # TODO calibrate
+    },
+]
 
 # Unused mixed settings (left to keep tests passing)
 SPINDLE_MAX_RPM = 10000
@@ -70,14 +99,6 @@ STEPPER_STEP_PIN_Z = 12
 STEPPER_DIR_PIN_X = 20
 STEPPER_DIR_PIN_Y = 19
 STEPPER_DIR_PIN_Z = 13
-
-# Servo motor GPIO pins
-EXTRUDER_0_PWM_PIN = 23
-EXTRUDER_1_PWM_PIN = 22
-EXTRUDER_2_PWM_PIN = 27
-EXTRUDER_3_PWM_PIN = 18
-EXTRUDER_4_PWM_PIN = 17
-EXTRUDER_5_PWM_PIN = 4
 
 ENDSTOP_PIN_X = 24
 ENDSTOP_PIN_Y = 10
