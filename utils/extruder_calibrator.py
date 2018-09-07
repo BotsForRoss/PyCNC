@@ -8,11 +8,12 @@ from threading import Thread
 
 gpio = rpgpio.GPIO()
 RANGE = 10  # number of seconds max to run one step of calibration
+INCREMENT = .01
 
 
 def prompt_duty_cycle(duty_cycle_range):
-    stop = input('duty cycle: ({:0.4f}, {:0.4f}). Moving?'.format(duty_cycle_range[0], duty_cycle_range[1]))
-    print('\r')
+    stop = input('duty cycle: ({:0.4f}, {:0.4f}). Moving? '.format(duty_cycle_range[0], duty_cycle_range[1]))
+    print('\r', end='')
     return stop == 'y'
 
 
@@ -25,8 +26,9 @@ def calibrate(pin):
         extruder._last_stopped_pos = RANGE
         extruder.set_position(0, 1)
         if prompt_duty_cycle(extruder._duty_cycle_range):
+            extruder._stop()
             break
-        extruder._duty_cycle_range[0] += .01
+        extruder._duty_cycle_range = (extruder._duty_cycle_range[0] + INCREMENT, extruder._duty_cycle_range[1])
 
     # calibrate for forward direction (max duty cycle)
     while extruder._duty_cycle_range[1] > extruder._duty_cycle_range[0]:
@@ -34,10 +36,11 @@ def calibrate(pin):
         extruder._last_stopped_pos = 0
         extruder.set_position(RANGE, 1)
         if prompt_duty_cycle(extruder._duty_cycle_range):
+            extruder._stop()
             break
-        extruder._duty_cycle_range[1] -= .01
+        extruder._duty_cycle_range = (extruder._duty_cycle_range[0], extruder._duty_cycle_range[1] - INCREMENT)
 
-    print('final duty cycle range: ({}, {})'.format(extruder._duty_cycle_range[0], extruder._duty_cycle_range[1]))
+    print('final duty cycle range: ({:0.4f}, {:0.4f})'.format(extruder._duty_cycle_range[0], extruder._duty_cycle_range[1]))
 
 
 if __name__ == '__main__':
