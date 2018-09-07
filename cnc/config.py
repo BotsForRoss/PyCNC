@@ -46,32 +46,32 @@ EXTRUDER_CONFIG = [
     {
         'pin': 23,
         'max_speed': 1500,  # mm/min
-        'duty_cycle_range': (.02, .12)
+        'duty_cycle_range': (2, 12)
     },
     {
         'pin': 22,
         'max_speed': 1500,
-        'duty_cycle_range': (.02, .12)  # TODO calibrate
+        'duty_cycle_range': (2, 12)  # TODO calibrate
     },
     {
         'pin': 27,
         'max_speed': 1500,
-        'duty_cycle_range': (.02, .12)  # TODO calibrate
+        'duty_cycle_range': (2, 12)  # TODO calibrate
     },
     {
         'pin': 18,
         'max_speed': 1500,
-        'duty_cycle_range': (.02, .12)  # TODO calibrate
+        'duty_cycle_range': (2, 12)  # TODO calibrate
     },
     {
         'pin': 17,
         'max_speed': 1500,
-        'duty_cycle_range': (.02, .12)  # TODO calibrate
+        'duty_cycle_range': (2, 12)  # TODO calibrate
     },
     {
         'pin': 4,
         'max_speed': 1500,
-        'duty_cycle_range': (.02, .12)  # TODO calibrate
+        'duty_cycle_range': (2, 12)  # TODO calibrate
     },
 ]
 

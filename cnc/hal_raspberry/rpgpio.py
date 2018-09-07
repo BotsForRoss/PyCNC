@@ -259,7 +259,7 @@ class DMAGPIO(DMAProto):
 class DMAPWM(DMAProto):
     _DMA_CONTROL_BLOCK_SIZE = 32
     _DMA_DATA_OFFSET = 24
-    _TOTAL_NUMBER_OF_BLOCKS = 256
+    _TOTAL_NUMBER_OF_BLOCKS = 32768  # sets freqency to 90Hz. See https://github.com/Nikolay-Kha/PyCNC/issues/7
     _DMA_CHANNEL = 14
 
     def __init__(self):

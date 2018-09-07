@@ -10,16 +10,16 @@ from cnc.config import *
 """
 
 
-class MockGPIO:
-    def set(self, pin):
+class MockPWM:
+    def add_pin(self, pin, duty_cycle):
         pass
 
-    def clear(self, pin):
+    def remove_pin(self, pin):
         pass
 
 extruders = [
     Extruder(
-        MockGPIO(),
+        MockPWM(),
         config['pin'],
         EXTRUDER_LENGTH_MM,
         config['duty_cycle_range'],
