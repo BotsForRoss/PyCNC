@@ -7,19 +7,19 @@ from threading import Thread
 
 
 gpio = rpgpio.GPIO()
+pwm = rpgpio.DMAPWM()
 RANGE = 10  # number of seconds max to run one step of calibration
 INCREMENT = 1.0
 
 
-duty_cycle_range = (0, 100)
-
-
-def prompt_duty_cycle():
+def prompt_duty_cycle(duty_cycle_range):
     return input('duty cycle: ({:0.4f}, {:0.4f}). Continue, (s)top, (r)everse, (i)ncrease delta, or (d)ecrease delta.'
         .format(duty_cycle_range[0], duty_cycle_range[1]))
 
 
-def calibrate_direction(extruder, reverse=False):
+def calibrate_direction(starting_range, extruder, reverse=False):
+    duty_cycle_range = starting_range
+
     if reverse:
         start = RANGE
         end = 0
@@ -36,7 +36,7 @@ def calibrate_direction(extruder, reverse=False):
         extruder.set_position(end, 1)
 
         # process input
-        prompt = prompt_duty_cycle()
+        prompt = prompt_duty_cycle(duty_cycle_range)
         if prompt == 's':  # stop
             extruder._stop()
             break
@@ -59,19 +59,24 @@ def calibrate_direction(extruder, reverse=False):
             next_range = (duty_cycle_range[0], duty_cycle_range[1] + delta)
         extruder._motor._duty_cycle_mid = (next_range[0] + next_range[1]) / 2.0
         extruder._motor._duty_cycle_delta = (next_range[1] - next_range[0]) / 2.0
+        duty_cycle_range = next_range
+
+    return duty_cycle_range
 
 def calibrate(pin):
-    extruder = Extruder(gpio, pin, RANGE, duty_cycle_range, 1)
+    duty_cycle_range = (0, 100)
+    extruder = Extruder(pwm, pin, RANGE, duty_cycle_range, 1)
 
     # calibrate for reverse direction (min duty cycle)
     print('calibrating min duty cycle')
-    calibrate_direction(extruder, reverse=True)
+    duty_cycle_range = calibrate_direction(duty_cycle_range, extruder, reverse=True)
 
     # calibrate for forward direction (max duty cycle)
     print('calibrating max duty cycle')
-    calibrate_direction(extruder, reverse=False)
+    duty_cycle_range = calibrate_direction(duty_cycle_range, extruder, reverse=False)
 
     print('final duty cycle range: ({:0.4f}, {:0.4f})'.format(duty_cycle_range[0], duty_cycle_range[1]))
+    pwm.remove_all()
 
 
 if __name__ == '__main__':
