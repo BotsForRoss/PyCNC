@@ -6,8 +6,8 @@ from threading import Thread
 
 # These values are based off of this guide:
 # https://learn.sparkfun.com/tutorials/pi-servo-hat-hookup-guide#software---python
-_DUTY_CYCLE_STOP = .305  # the duty cycle needed to hold the motor still
-_DUTY_CYCLE_RANGE = .101  # what to add/subtract from _DUTY_CYCLE_STOP to get full forward/reverse
+_DUTY_CYCLE_STOP = .07  # .305  # the duty cycle needed to hold the motor still
+_DUTY_CYCLE_RANGE = .05  # .101  # what to add/subtract from _DUTY_CYCLE_STOP to get full forward/reverse
 _PERIOD = 1/50.0  # seconds
 
 
@@ -52,6 +52,7 @@ class Extruder(object):
             raise ValueError('extruder too fast ({} mm/s)'.format(speed))
 
         duty_cycle = _DUTY_CYCLE_STOP + _DUTY_CYCLE_RANGE * (speed / max_speed)
+        print('set duty cycle to {}'.format(duty_cycle))
 
         on_time = duty_cycle * _PERIOD
         off_time = _PERIOD - on_time
@@ -105,7 +106,7 @@ class Extruder(object):
             return
 
         # Calculate the speed and duration of movement
-        delta = self._last_stopped_pos - position
+        delta = position - self._last_stopped_pos
         if delta < 0:
             speed = -speed
         self._speed = speed
