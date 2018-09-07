@@ -51,17 +51,19 @@ def calibrate_direction(extruder, reverse=False):
 
         # set next duty cycle range
         if reverse:
-            extruder._duty_cycle_range = (extruder._duty_cycle_range[0], extruder._duty_cycle_range[1] + delta)
-        else:
             extruder._duty_cycle_range = (extruder._duty_cycle_range[0] + delta, extruder._duty_cycle_range[1])
+        else:
+            extruder._duty_cycle_range = (extruder._duty_cycle_range[0], extruder._duty_cycle_range[1] + delta)
 
 def calibrate(pin):
     extruder = Extruder(gpio, pin, RANGE, (0, 1), 1)
 
     # calibrate for reverse direction (min duty cycle)
+    print('calibrating min duty cycle')
     calibrate_direction(extruder, reverse=True)
 
     # calibrate for forward direction (max duty cycle)
+    print('calibrating max duty cycle')
     calibrate_direction(extruder, reverse=False)
 
     print('final duty cycle range: ({:0.4f}, {:0.4f})'.format(extruder._duty_cycle_range[0], extruder._duty_cycle_range[1]))
