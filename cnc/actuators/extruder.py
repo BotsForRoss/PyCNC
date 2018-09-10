@@ -10,26 +10,24 @@ class Extruder(object):
     This tracks the position of the extruder to keep it from hitting limits. It is all time-based and not precise!
     """
 
-    def __init__(self, pwm, pin, range, duty_cycle_range, max_speed, initial_pos=0.0):
+    def __init__(self, motor, range, max_speed, initial_pos=0.0):
         """
         Arguments:
-            pwm {rpgpio.DMAPWM} -- a PWM object to add and remove pins
-            pin {int} -- the GPIO pin to control the extuder's servo
+            motor {ServoMotor} -- a ServoMotor that can stop and set_speed
             range {float} -- the range of the extruder in mm
-            duty_cycle_range {(float, float)} --  the minimum and maximum duty cycle to operate the servo motor
-                (from 0 to 100)
             max_speed {float} -- the max speed of the extruder in mm/s
 
         Keyword Arguments:
             initial_pos {float} -- how many mm are already extruded on init (default {0.0})
         """
-        self._motor = ServoMotor(pwm, pin, duty_cycle_range)
+        self._motor = motor
         self._range = range
+        self._max_speed = max_speed
         self._last_stopped_pos = initial_pos
+
         self._timer = None
         self._speed = None  # in mm/second
         self._set_time = None
-        self._max_speed = max_speed
 
     def _stop(self):
         """

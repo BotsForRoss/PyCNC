@@ -65,32 +65,42 @@ EXTRUDER_CONFIG = [
     {
         'pin': 23,
         'max_speed': 1500,  # mm/min
-        'duty_cycle_range': (4, 20)
+
+        # The percent duty cycle needed to stop the extruder
+        'duty_cycle_stop': 13.0,
+
+        # The percent duty cycle added or subtracted from 'duty_cycle_stop' to reach max speed
+        'duty_cycle_range': 5.0
     },
     {
         'pin': 22,
         'max_speed': 1500,
-        'duty_cycle_range': (2, 12)  # TODO calibrate
+        'duty_cycle_stop': 13.0,
+        'duty_cycle_range': 5.0  # TODO calibrate
     },
     {
         'pin': 27,
         'max_speed': 1500,
-        'duty_cycle_range': (2, 12)  # TODO calibrate
+        'duty_cycle_stop': 13.0,
+        'duty_cycle_range': 5.0  # TODO calibrate
     },
     {
         'pin': 18,
         'max_speed': 1500,
-        'duty_cycle_range': (2, 12)  # TODO calibrate
+        'duty_cycle_stop': 13.0,
+        'duty_cycle_range': 5.0  # TODO calibrate
     },
     {
         'pin': 17,
         'max_speed': 1500,
-        'duty_cycle_range': (2, 12)  # TODO calibrate
+        'duty_cycle_stop': 13.0,
+        'duty_cycle_range': 5.0  # TODO calibrate
     },
     {
         'pin': 4,
         'max_speed': 1500,
-        'duty_cycle_range': (2, 12)  # TODO calibrate
+        'duty_cycle_stop': 13.0,
+        'duty_cycle_range': 5.0  # TODO calibrate
     },
 ]
 

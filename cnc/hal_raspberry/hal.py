@@ -4,6 +4,7 @@ from cnc.hal_raspberry import rpgpio
 from cnc.pulses import *
 from cnc.config import *
 from cnc.sensors import thermistor
+from cnc.actuators.servo_motor import ServoMotor
 from cnc.actuators.extruder import Extruder
 
 US_IN_SECONDS = 1000000
@@ -43,8 +44,16 @@ def init():
         gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
         gpio.clear(pin)
         # TODO save the previous position and use that as initial position for convenience
-        extruder = Extruder(pwm, pin, EXTRUDER_LENGTH_MM, extruder_config['duty_cycle_range'],
-                            extruder_config['max_speed'] / 60.0)
+        extruder = Extruder(
+                ServoMotor(
+                    pwm,
+                    pin,
+                    extruder_config['duty_cycle_stop'],
+                    extruder_config['duty_cycle_range']
+                ),
+                EXTRUDER_LENGTH_MM,
+                extruder_config['max_speed'] / 60.0
+        )
         extruders.append(extruder)
 
 
