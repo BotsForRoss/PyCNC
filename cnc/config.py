@@ -1,21 +1,40 @@
 # -----------------------------------------------------------------------------
 # Hardware config.
 
+# Stepper motors microsteps per whole step
+# Setting this as high as 32 will cause tests/circles.gcode to fail and significantly slows command processing
+STEPPER_PULSES_PER_STEP = 4
+
+# Stepper motors max whole steps per minute
+# Derived empirically
+MAX_VELOCITY_STEPS_PER_MIN_X = 84000
+MAX_VELOCITY_STEPS_PER_MIN_Y = 84000
+MAX_VELOCITY_STEPS_PER_MIN_Z = 84000
+
+# Stepper motors steps per revolution
+# Derived from degrees per step
+STEPPER_STEPS_PER_REVOLUTION = 200
+
+# The leadscrew's lead (i.e. mm traveled per revolution)
+LEADSCREW_LEAD_MM = 8
+
+# Stepper motors steps per millimeter for each axis
+STEPPER_STEPS_PER_MM = STEPPER_STEPS_PER_REVOLUTION / LEADSCREW_LEAD_MM
+
+# Stepper motors pulses per millimeter for each axis
+STEPPER_PULSES_PER_MM = STEPPER_PULSES_PER_STEP * STEPPER_STEPS_PER_MM
+STEPPER_PULSES_PER_MM_X = STEPPER_PULSES_PER_MM
+STEPPER_PULSES_PER_MM_Y = STEPPER_PULSES_PER_MM
+STEPPER_PULSES_PER_MM_Z = STEPPER_PULSES_PER_MM
+STEPPER_PULSES_PER_MM_E = STEPPER_PULSES_PER_MM
+
 # Maximum velocity for each axis in millimeter per minute.
-# TODO measure or derive these
-MAX_VELOCITY_MM_PER_MIN_X = 12000
-MAX_VELOCITY_MM_PER_MIN_Y = 12000
-MAX_VELOCITY_MM_PER_MIN_Z = 600
+MAX_VELOCITY_MM_PER_MIN_X = MAX_VELOCITY_STEPS_PER_MIN_X / STEPPER_STEPS_PER_MM
+MAX_VELOCITY_MM_PER_MIN_Y = MAX_VELOCITY_STEPS_PER_MIN_Y / STEPPER_STEPS_PER_MM
+MAX_VELOCITY_MM_PER_MIN_Z = MAX_VELOCITY_STEPS_PER_MIN_Z / STEPPER_STEPS_PER_MM
 MIN_VELOCITY_MM_PER_MIN = 1
 # Average velocity for endstop calibration procedure
 CALIBRATION_VELOCITY_MM_PER_MIN = 300
-
-# Stepper motors steps per millimeter for each axis.
-# TODO measure or derive these
-STEPPER_PULSES_PER_MM_X = 100
-STEPPER_PULSES_PER_MM_Y = 100
-STEPPER_PULSES_PER_MM_Z = 100
-STEPPER_PULSES_PER_MM_E = 100
 
 # Invert axises direction, by default(False) high level means increase of
 # position. For inverted(True) axis, high level means decrease of position.
