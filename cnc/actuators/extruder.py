@@ -35,7 +35,17 @@ class Extruder(object):
         """
         self._motor.stop()
         self._last_stopped_pos = self.get_position()
-        self._timer = None
+
+    def cancel(self):
+        """
+        Cancel the previous command and immediately stop the motor
+        """
+        if self.is_running():
+            self._timer.cancel()
+            self._stop()
+
+    def is_running(self):
+        return self._timer and self._timer.is_alive()
 
     def get_position(self):
         """
@@ -44,7 +54,7 @@ class Extruder(object):
         Returns:
             float -- how far from the extruder is from the fully un-extruded position, in mm
         """
-        if self._timer:
+        if self.is_running():
             distance_moved = self._speed * (time.time() - self._set_time)
             return self._last_stopped_pos + distance_moved
         return self._last_stopped_pos
@@ -71,10 +81,8 @@ class Extruder(object):
         if position > self._range:
             position = self._range
 
-        # If the extruder is already moving, stop it
-        if self._timer:
-            self._timer.cancel()
-            self._stop()
+        # Wait for previous command to finish
+        self.join()
 
         if speed == 0:
             return
@@ -100,7 +108,7 @@ class Extruder(object):
         """
         Wait for the extruder to stop, if it is moving
         """
-        if self._timer:
+        if self.is_running():
             self._timer.join()
 
     def get_max_speed(self):
