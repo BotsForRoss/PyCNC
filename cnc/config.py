@@ -160,5 +160,6 @@ AUDIO_BASE_FILEPATH = '/home/pi/audio/'
 # A map from ID to audio filepath
 # For example, `M72 P3` would play the file with ID of 3
 AUDIO_FILES = {
-    0: 'way.wav'
+    0: 'airhorn.ogg',
+    1: 'way.ogg'
 }
