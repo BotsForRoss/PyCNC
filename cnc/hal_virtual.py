@@ -17,12 +17,17 @@ class MockPWM:
     def remove_pin(self, pin):
         pass
 
+class MockServo:
+    def stop(self):
+        pass
+
+    def set_speed(self, speed):
+        pass
+
 extruders = [
     Extruder(
-        MockPWM(),
-        config['pin'],
+        MockServo(),
         EXTRUDER_LENGTH_MM,
-        config['duty_cycle_range'],
         config['max_speed'] / 60.0
     ) for config in EXTRUDER_CONFIG
 ]

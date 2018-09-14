@@ -18,9 +18,12 @@ if ! which ${app} &> /dev/null; then
     echo "WARNING pycnc not found in path. Not installed? Using './pycnc'."
     app="./pycnc"
 fi
-res="$(${app} tests/rects.gcode 2>&1)"
-res="${res}$(${app} tests/circles.gcode 2>&1)"
-res="${res}$(${app} tests/test_parser.gcode 2>&1)"
+echo 'testing rects.gcode'
+res="$(${app} tests/rects.gcode)"
+echo 'testing circles.gcode'
+res="${res}$(${app} tests/circles.gcode)"
+echo 'testing test_parser.gcode'
+res="${res}$(${app} tests/test_parser.gcode)"
 if echo "${res}" | grep -q -i error; then
   echo "FAILED"
   echo "$res"

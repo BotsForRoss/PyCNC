@@ -2,19 +2,16 @@ import unittest
 
 from cnc.actuators.extruder import Extruder
 from cnc.actuators.servo_motor import ServoMotor
-from unittest.mock import patch, Mock
+from unittest.mock import Mock
 
 
 EXTRUDER_ERROR_TOLERANCE = 2  # mm
 
 
 class TestExtruder(unittest.TestCase):
-    @patch('cnc.actuators.extruder.ServoMotor')
-    def setUp(self, mock_motor_init):
+    def setUp(self):
         self.motor = Mock(spec=ServoMotor)
-        mock_motor_init.return_value = self.motor
-
-        self.extruder = Extruder(None, 123, 50, (20, 40), 100)
+        self.extruder = Extruder(self.motor, 50, 100)
 
     def test_set_position(self):
         self.extruder.set_position(10, 100, wait=True)

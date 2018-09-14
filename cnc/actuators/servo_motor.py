@@ -4,17 +4,18 @@ class ServoMotor(object):
     This class could be used for any servo, but we use this one: https://www.adafruit.com/product/154
     """
 
-    def __init__(self, pwm, pin, duty_cycle_range):
+    def __init__(self, pwm, pin, duty_cycle_stop, duty_cycle_range):
         """
         Arguments:
             pwm {DMAPWM} -- a DMAPWM object
             pin {int} -- the GPIO pin to control this servo
-            duty_cycle_range {(float, float)} -- the min and max duty cycle to operate this motor (from 0 to 100)
+            duty_cycle_stop {float} -- the percent duty cycle to make the motor stop
+            duty_cycle_range {float} -- the percent duty cycle added to duty_cycle_stop to reach max speed
         """
         self._pwm = pwm
         self._pin = pin
-        self._duty_cycle_mid = (duty_cycle_range[0] + duty_cycle_range[1]) / 2.0
-        self._duty_cycle_delta = (duty_cycle_range[1] - duty_cycle_range[0]) / 2.0
+        self._duty_cycle_mid = duty_cycle_stop
+        self._duty_cycle_delta = duty_cycle_range
 
     def _set_duty_cycle(self, duty_cycle):
         """

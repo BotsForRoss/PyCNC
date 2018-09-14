@@ -7,6 +7,7 @@ from cnc.coordinates import *
 from cnc.heater import *
 from cnc.enums import *
 from cnc.watchdog import *
+from cnc.audio import AudioPlayer
 
 
 class GMachineException(Exception):
@@ -39,6 +40,7 @@ class GMachine(object):
     def release(self):
         """ Free all resources.
         """
+        AudioPlayer.stop()
         hal.deinit()
 
     def reset(self):
@@ -119,7 +121,6 @@ class GMachine(object):
         extruder_speed = self._get_extruder_speed(delta, velocity)
         self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
-        self._end_extruder_move()
 
         # save position
         self._position = self._position + delta
@@ -245,7 +246,6 @@ class GMachine(object):
         extruder_speed = self._get_extruder_speed(delta, velocity)
         self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
-        self._end_extruder_move()
         # save position
         self._position = self._position + delta
 
@@ -296,14 +296,7 @@ class GMachine(object):
         """
         extruder = hal.get_extruder(self._extruder_id)
         pos = extruder.get_position()
-        extruder.set_position(pos + delta, speed=speed / 60.0)
-
-    def _end_extruder_move(self):
-        """
-        Wait for the current extruder to stop moving
-        """
-        extruder = hal.get_extruder(self._extruder_id)
-        extruder.join()
+        extruder.set_position(pos + delta, speed / 60.0)
 
     def _set_extruder(self, extruder_id):
         """
@@ -426,6 +419,13 @@ class GMachine(object):
             #     self._local = self._position
         elif c == 'M2' or c == 'M30':  # program finish, reset everything.
             self.reset()
+        elif c == 'M72':
+            audio_id = int(gcode.get('P', 0))
+            if audio_id not in AUDIO_FILES:
+                raise GMachineException('Audio ID not recognized')
+            audio_filepath = AUDIO_BASE_FILEPATH + AUDIO_FILES[audio_id]
+            logging.info('playing audio from {}'.format(audio_filepath))
+            AudioPlayer.play(audio_filepath)
         elif c == 'M84':  # disable motors
             hal.disable_steppers()
         elif c == 'M111':  # enable debug
