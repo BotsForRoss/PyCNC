@@ -56,51 +56,53 @@ ENDSTOP_INVERTED_Z = True
 TABLE_SIZE_X_MM = 200
 TABLE_SIZE_Y_MM = 200
 TABLE_SIZE_Z_MM = 220
-EXTRUDER_LENGTH_MM = 150
+EXTRUDER_LENGTH_MM = 114
 
 # Mixed settings.
 STEPPER_PULSE_LENGTH_US = 2
 STEPPER_MAX_ACCELERATION_MM_PER_S2 = 3000  # for all axis, mm per sec^2
 EXTRUDER_CONFIG = [
-    {
+    {  # E0
         'pin': 23,
-        'max_speed': 1500,  # mm/min
+
+        # This was measured without paint
+        'max_speed': 75,  # mm/min
 
         # The percent duty cycle needed to stop the extruder
         'duty_cycle_stop': 13.0,
 
         # The percent duty cycle added or subtracted from 'duty_cycle_stop' to reach max speed
-        'duty_cycle_range': 5.0
+        'duty_cycle_range': 9.0
     },
-    {
+    {  # E1
         'pin': 22,
-        'max_speed': 1500,
+        'max_speed': 75,
         'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 5.0  # TODO calibrate
+        'duty_cycle_range': 9.0
     },
-    {
+    {  # E2
         'pin': 27,
-        'max_speed': 1500,
+        'max_speed': 75,
         'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 5.0  # TODO calibrate
+        'duty_cycle_range': 9.0
     },
-    {
+    {  # E3
         'pin': 18,
-        'max_speed': 1500,
-        'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 5.0  # TODO calibrate
+        'max_speed': 75,
+        'duty_cycle_stop': 13.2,
+        'duty_cycle_range': 9.0
     },
-    {
+    {  # E4
         'pin': 17,
-        'max_speed': 1500,
+        'max_speed': 75,
         'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 5.0  # TODO calibrate
+        'duty_cycle_range': 9.0
     },
-    {
+    {  # E5
         'pin': 4,
-        'max_speed': 1500,
+        'max_speed': 75,
         'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 5.0  # TODO calibrate
+        'duty_cycle_range': 9.0
     },
 ]
 
