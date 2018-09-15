@@ -68,8 +68,9 @@ def main():
                 do_line(line)
     except KeyboardInterrupt:
         pass
-    print("\r\nExiting...")
-    machine.release()
+    finally:
+        print("\r\nExiting...")
+        machine.release()
 
 
 if __name__ == "__main__":
