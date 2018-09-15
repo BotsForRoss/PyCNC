@@ -106,10 +106,7 @@ class GMachine(object):
         return velocity.e
 
     def _move_linear(self, delta, velocity):
-        delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                            1.0 / STEPPER_PULSES_PER_MM_Y,
-                            1.0 / STEPPER_PULSES_PER_MM_Z,
-                            1.0 / STEPPER_PULSES_PER_MM_E)
+        delta = delta.round_to_nearest_pulse()
         if delta.is_zero():
             return
         self.__check_delta(delta)
@@ -147,7 +144,8 @@ class GMachine(object):
         if a >= 0 and b < 0:
             return 4
 
-    def __check_circle(self, delta_a, delta_b, radius_a, radius_b, direction, position_a, position_b, table_a, table_b):
+    def __check_circle(self, delta_a, delta_b, radius_a, radius_b, direction, position_a, position_b, 
+                       table_a, table_b, pulses_per_mm_a, pulses_per_mm_b):
         """Validates the circle to be drawn, checking for a valid radius, a valid endpoint, and if the circle 
             is bounded within the table
 
@@ -160,6 +158,7 @@ class GMachine(object):
             direction {RotationalDirection(Enum)} -- the direction the circle will draw
             position_a, position_b {float} -- the current position (starting position) in absolute coordinates
             table_a, table_b {int} -- the table's maximum for both the a and b axis
+            pulses_per_mm_a, pulses_per_mm_b {float} -- the pulses per mm for both axis'
         
         Raises:
             GMachineException -- raised if the radius is zero
@@ -171,7 +170,8 @@ class GMachine(object):
         if radius == 0:
             raise GMachineException("circle radius is zero")
         # check if (delta_a, delta_b) is on the specified circle
-        if math.hypot(delta_a - radius_a, delta_b - radius_b) != radius:
+        if math.isclose(math.hypot(delta_a - radius_a, delta_b - radius_b), radius, 
+                        rel_tol=min(1.0 / pulses_per_mm_a, 1.0 / pulses_per_mm_b)):
             raise GMachineException("endpoint not on circle")
         # check if the drawn circle is inside the table
         start_quarter = GMachine.__quarter(-radius_a, -radius_b)
@@ -213,31 +213,28 @@ class GMachine(object):
 
 
     def _move_circular(self, delta, radius, velocity, direction):
-        delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                            1.0 / STEPPER_PULSES_PER_MM_Y,
-                            1.0 / STEPPER_PULSES_PER_MM_Z,
-                            1.0 / STEPPER_PULSES_PER_MM_E)
-        radius = radius.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                              1.0 / STEPPER_PULSES_PER_MM_Y,
-                              1.0 / STEPPER_PULSES_PER_MM_Z,
-                              1.0 / STEPPER_PULSES_PER_MM_E)
+        delta = delta.round_to_nearest_pulse()
+        radius = radius.round_to_nearest_pulse()
         self.__check_delta(delta)
         # get delta vector and put it on circle
         if self._plane == PLANE_XY:
             self.__check_circle(delta.x, delta.y, radius.x, radius.y,
                                 direction, self._position.x,
                                 self._position.y, TABLE_SIZE_X_MM,
-                                TABLE_SIZE_Y_MM)
+                                TABLE_SIZE_Y_MM, STEPPER_PULSES_PER_MM_X,
+                                STEPPER_PULSES_PER_MM_Y)
         elif self._plane == PLANE_YZ:
             self.__check_circle(delta.y, delta.z, radius.y, radius.z,
                                 direction, self._position.y,
                                 self._position.z, TABLE_SIZE_Y_MM,
-                                TABLE_SIZE_Z_MM)
+                                TABLE_SIZE_Z_MM, STEPPER_PULSES_PER_MM_Y, 
+                                STEPPER_PULSES_PER_MM_Z)
         elif self._plane == PLANE_ZX:
             self.__check_circle(delta.z, delta.x, radius.z, radius.x,
                                 direction, self._position.z,
                                 self._position.x, TABLE_SIZE_Z_MM,
-                                TABLE_SIZE_X_MM)
+                                TABLE_SIZE_X_MM, STEPPER_PULSES_PER_MM_Z,
+                                STEPPER_PULSES_PER_MM_X)
         logging.info("Moving circularly {} {} {} with radius {}"
                      " and velocity {}".format(self._plane, delta,
                                                direction, radius, velocity))

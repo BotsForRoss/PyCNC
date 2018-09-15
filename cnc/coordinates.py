@@ -1,6 +1,6 @@
 from __future__ import division
 import math
-
+from cnc.config import *
 
 class Coordinates(object):
     """ This object represent machine coordinates.
@@ -59,6 +59,17 @@ class Coordinates(object):
                            round(self.y / base_y) * base_y,
                            round(self.z / base_z) * base_z,
                            round(self.e / base_e) * base_e)
+
+
+    def round_to_nearest_pulse(self):
+        """ Round coordinates to the nearest pulse on each axis
+        :return: New rounded object.
+        """
+        base_x = 1.0 / STEPPER_PULSES_PER_MM_X
+        base_y = 1.0 / STEPPER_PULSES_PER_MM_Y
+        base_z = 1.0 / STEPPER_PULSES_PER_MM_Z
+        base_e = 1.0 / STEPPER_PULSES_PER_MM_E
+        return self.round(base_x, base_y, base_z, base_e)
 
     def find_max(self):
         """ Find a maximum value of all values.
