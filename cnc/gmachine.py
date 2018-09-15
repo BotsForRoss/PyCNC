@@ -126,11 +126,11 @@ class GMachine(object):
     def __quarter(a, b):
         """Takes the coordinates a and b of a point relative to the center of the circle
             and returns the quarter of the circle the point is in
-        
+
         Arguments:
             a {float} -- The first coordinate
             b {float} -- The second coordinate
-        
+
         Returns:
             {int} -- The quarter the specified point exists in
         """
@@ -144,14 +144,14 @@ class GMachine(object):
         if a >= 0 and b < 0:
             return 4
 
-    def __check_circle(self, delta_a, delta_b, radius_a, radius_b, direction, position_a, position_b, 
+    def __check_circle(self, delta_a, delta_b, radius_a, radius_b, direction, position_a, position_b,
                        table_a, table_b, pulses_per_mm_a, pulses_per_mm_b):
-        """Validates the circle to be drawn, checking for a valid radius, a valid endpoint, and if the circle 
+        """Validates the circle to be drawn, checking for a valid radius, a valid endpoint, and if the circle
             is bounded within the table
 
-            The coordinates are labeled as a and b because the plane is selectable and a and b stand for arbitrary 
+            The coordinates are labeled as a and b because the plane is selectable and a and b stand for arbitrary
             combinations of x, y and z.
-        
+
         Arguments:
             delta_a, delta_b {float} -- coordinates of the endpoint relative to the position
             radius_a, radius_b {float} -- coordinates of the circle's center relative to the position
@@ -159,7 +159,7 @@ class GMachine(object):
             position_a, position_b {float} -- the current position (starting position) in absolute coordinates
             table_a, table_b {int} -- the table's maximum for both the a and b axis
             pulses_per_mm_a, pulses_per_mm_b {float} -- the pulses per mm for both axis'
-        
+
         Raises:
             GMachineException -- raised if the radius is zero
             GMachineException -- raised if the endpoint not on the defined circle
@@ -170,8 +170,8 @@ class GMachine(object):
         if radius == 0:
             raise GMachineException("circle radius is zero")
         # check if (delta_a, delta_b) is on the specified circle
-        if math.isclose(math.hypot(delta_a - radius_a, delta_b - radius_b), radius, 
-                        rel_tol=min(1.0 / pulses_per_mm_a, 1.0 / pulses_per_mm_b)):
+        if not math.isclose(math.hypot(delta_a - radius_a, delta_b - radius_b), radius,
+                            rel_tol=min(1.0 / pulses_per_mm_a, 1.0 / pulses_per_mm_b)):
             raise GMachineException("endpoint not on circle")
         # check if the drawn circle is inside the table
         start_quarter = GMachine.__quarter(-radius_a, -radius_b)
@@ -179,10 +179,10 @@ class GMachine(object):
             end_quarter = 5
         else:
             end_quarter = GMachine.__quarter(delta_a - radius_a, delta_b - radius_b)
-        
+
         if start_quarter == end_quarter:
             return
-        
+
         # If the start and end points are not in the same quarter, there will be new maximum values that have to be checked against
         # boundry conditions
         is_raise = False
@@ -226,7 +226,7 @@ class GMachine(object):
             self.__check_circle(delta.y, delta.z, radius.y, radius.z,
                                 direction, self._position.y,
                                 self._position.z, TABLE_SIZE_Y_MM,
-                                TABLE_SIZE_Z_MM, STEPPER_PULSES_PER_MM_Y, 
+                                TABLE_SIZE_Z_MM, STEPPER_PULSES_PER_MM_Y,
                                 STEPPER_PULSES_PER_MM_Z)
         elif self._plane == PLANE_ZX:
             self.__check_circle(delta.z, delta.x, radius.z, radius.x,
