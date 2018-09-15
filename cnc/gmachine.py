@@ -106,10 +106,7 @@ class GMachine(object):
         return velocity.e
 
     def _move_linear(self, delta, velocity):
-        delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                            1.0 / STEPPER_PULSES_PER_MM_Y,
-                            1.0 / STEPPER_PULSES_PER_MM_Z,
-                            1.0 / STEPPER_PULSES_PER_MM_E)
+        delta = delta.round_to_nearest_pulse()
         if delta.is_zero():
             return
         self.__check_delta(delta)
@@ -126,123 +123,130 @@ class GMachine(object):
         self._position = self._position + delta
 
     @staticmethod
-    def __quarter(pa, pb):
-        if pa >= 0 and pb >= 0:
+    def __quarter(a, b):
+        """Takes the coordinates a and b of a point relative to the center of the circle
+            and returns the quarter of the circle the point is in
+
+        Arguments:
+            a {float} -- The first coordinate
+            b {float} -- The second coordinate
+
+        Returns:
+            {int} -- The quarter the specified point exists in
+        """
+
+        if a > 0 and b >= 0:
             return 1
-        if pa < 0 and pb >= 0:
+        if a <= 0 and b > 0:
             return 2
-        if pa < 0 and pb < 0:
+        if a < 0 and b <= 0:
             return 3
-        if pa >= 0 and pb < 0:
+        if a >= 0 and b < 0:
             return 4
 
-    def __adjust_circle(self, da, db, ra, rb, direction, pa, pb, ma, mb):
-        r = math.sqrt(ra * ra + rb * rb)
-        if r == 0:
+    def __check_circle(self, delta_a, delta_b, radius_a, radius_b, direction, position_a, position_b,
+                       table_a, table_b, pulses_per_mm_a, pulses_per_mm_b):
+        """Validates the circle to be drawn, checking for a valid radius, a valid endpoint, and if the circle
+            is bounded within the table
+
+            The coordinates are labeled as a and b because the plane is selectable and a and b stand for arbitrary
+            combinations of x, y and z.
+
+        Arguments:
+            delta_a, delta_b {float} -- coordinates of the endpoint relative to the position
+            radius_a, radius_b {float} -- coordinates of the circle's center relative to the position
+            direction {RotationalDirection(Enum)} -- the direction the circle will draw
+            position_a, position_b {float} -- the current position (starting position) in absolute coordinates
+            table_a, table_b {int} -- the table's maximum for both the a and b axis
+            pulses_per_mm_a, pulses_per_mm_b {float} -- the pulses per mm for both axis'
+
+        Raises:
+            GMachineException -- raised if the radius is zero
+            GMachineException -- raised if the endpoint not on the defined circle
+            GMachineException -- raised if the circle would draw out of bounds
+        """
+
+        radius = math.hypot(radius_a, radius_b)
+        if radius == 0:
             raise GMachineException("circle radius is zero")
-        sq = self.__quarter(-ra, -rb)
-        if da == 0 and db == 0:  # full circle
-            ea = da
-            eb = db
-            eq = 5  # mark as non-existing to check all
+        # check if (delta_a, delta_b) is on the specified circle
+        if not math.isclose(math.hypot(delta_a - radius_a, delta_b - radius_b), radius,
+                            rel_tol=min(1.0 / pulses_per_mm_a, 1.0 / pulses_per_mm_b)):
+            raise GMachineException("endpoint not on circle")
+        # check if the drawn circle is inside the table
+        start_quarter = GMachine.__quarter(-radius_a, -radius_b)
+        if delta_a == 0 and delta_b == 0: # If the endpoint and position are the same, check the full circle
+            end_quarter = 5
         else:
-            if da - ra == 0:
-                ea = 0
-            else:
-                b = (db - rb) / (da - ra)
-                ea = math.copysign(math.sqrt(r * r / (1.0 + abs(b))), da - ra)
-            eb = math.copysign(math.sqrt(r * r - ea * ea), db - rb)
-            eq = self.__quarter(ea, eb)
-            ea += ra
-            eb += rb
-        # iterate coordinates quarters and check if we fit table
-        q = sq
-        pq = q
-        for _ in range(0, 4):
+            end_quarter = GMachine.__quarter(delta_a - radius_a, delta_b - radius_b)
+
+        if start_quarter == end_quarter:
+            return
+
+        # If the start and end points are not in the same quarter, there will be new maximum values that have to be checked against
+        # boundry conditions
+        is_raise = False
+        quarter = start_quarter
+        prev_quarter = quarter
+        for _ in range(4):
             if direction == CW:
-                q -= 1
+                quarter -= 1
+                if quarter == 0: quarter = 4
             else:
-                q += 1
-            if q <= 0:
-                q = 4
-            elif q >= 5:
-                q = 1
-            if q == eq:
-                break
-            is_raise = False
-            if (pq == 1 and q == 4) or (pq == 4 and q == 1):
-                is_raise = (pa + ra + r > ma)
-            elif (pq == 1 and q == 2) or (pq == 2 and q == 1):
-                is_raise = (pb + rb + r > mb)
-            elif (pq == 2 and q == 3) or (pq == 3 and q == 2):
-                is_raise = (pa + ra - r < 0)
-            elif (pq == 3 and q == 4) or (pq == 4 and q == 3):
-                is_raise = (pb + rb - r < 0)
+                quarter += 1
+                if quarter == 5: quarter = 1
+
+            if (quarter == 1 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 1):
+                is_raise = (position_a + radius_a + radius > table_a)
+            elif (quarter == 1 and prev_quarter == 2) or (quarter == 2 and prev_quarter == 1):
+                is_raise = (position_b + radius_b + radius > table_b)
+            elif (quarter == 2 and prev_quarter == 3) or (quarter == 3 and prev_quarter == 2):
+                is_raise = (position_a + radius_a - radius < 0)
+            elif (quarter == 3 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 3):
+                is_raise = (position_b + radius_b - radius < 0)
             if is_raise:
-                raise GMachineException("out of effective area")
-            pq = q
-        return ea, eb
+                raise GMachineException("circle out of bounds")
+
+            if quarter == end_quarter:
+                break
+            prev_quarter = quarter
+
 
     def _move_circular(self, delta, radius, velocity, direction):
-        delta = delta.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                            1.0 / STEPPER_PULSES_PER_MM_Y,
-                            1.0 / STEPPER_PULSES_PER_MM_Z,
-                            1.0 / STEPPER_PULSES_PER_MM_E)
-        radius = radius.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                              1.0 / STEPPER_PULSES_PER_MM_Y,
-                              1.0 / STEPPER_PULSES_PER_MM_Z,
-                              1.0 / STEPPER_PULSES_PER_MM_E)
+        delta = delta.round_to_nearest_pulse()
         self.__check_delta(delta)
         # get delta vector and put it on circle
-        circle_end = Coordinates(0, 0, 0, 0)
         if self._plane == PLANE_XY:
-            circle_end.x, circle_end.y = \
-                self.__adjust_circle(delta.x, delta.y, radius.x, radius.y,
-                                     direction, self._position.x,
-                                     self._position.y, TABLE_SIZE_X_MM,
-                                     TABLE_SIZE_Y_MM)
-            circle_end.z = delta.z
+            self.__check_circle(delta.x, delta.y, radius.x, radius.y,
+                                direction, self._position.x,
+                                self._position.y, TABLE_SIZE_X_MM,
+                                TABLE_SIZE_Y_MM, STEPPER_PULSES_PER_MM_X,
+                                STEPPER_PULSES_PER_MM_Y)
         elif self._plane == PLANE_YZ:
-            circle_end.y, circle_end.z = \
-                self.__adjust_circle(delta.y, delta.z, radius.y, radius.z,
-                                     direction, self._position.y,
-                                     self._position.z, TABLE_SIZE_Y_MM,
-                                     TABLE_SIZE_Z_MM)
-            circle_end.x = delta.x
+            self.__check_circle(delta.y, delta.z, radius.y, radius.z,
+                                direction, self._position.y,
+                                self._position.z, TABLE_SIZE_Y_MM,
+                                TABLE_SIZE_Z_MM, STEPPER_PULSES_PER_MM_Y,
+                                STEPPER_PULSES_PER_MM_Z)
         elif self._plane == PLANE_ZX:
-            circle_end.z, circle_end.x = \
-                self.__adjust_circle(delta.z, delta.x, radius.z, radius.x,
-                                     direction, self._position.z,
-                                     self._position.x, TABLE_SIZE_Z_MM,
-                                     TABLE_SIZE_X_MM)
-            circle_end.y = delta.y
-        circle_end.e = delta.e
-        circle_end = circle_end.round(1.0 / STEPPER_PULSES_PER_MM_X,
-                                      1.0 / STEPPER_PULSES_PER_MM_Y,
-                                      1.0 / STEPPER_PULSES_PER_MM_Z,
-                                      1.0 / STEPPER_PULSES_PER_MM_E)
+            self.__check_circle(delta.z, delta.x, radius.z, radius.x,
+                                direction, self._position.z,
+                                self._position.x, TABLE_SIZE_Z_MM,
+                                TABLE_SIZE_X_MM, STEPPER_PULSES_PER_MM_Z,
+                                STEPPER_PULSES_PER_MM_X)
+        radius = radius.round_to_nearest_pulse()
         logging.info("Moving circularly {} {} {} with radius {}"
-                     " and velocity {}".format(self._plane, circle_end,
+                     " and velocity {}".format(self._plane, delta,
                                                direction, radius, velocity))
-        gen = PulseGeneratorCircular(circle_end, radius, self._plane,
+        gen = PulseGeneratorCircular(delta, radius, self._plane,
                                      direction, velocity)
         self.__check_velocity(gen.max_velocity())
-        # if finish coords is not on circle, move some distance linearly
-        linear_delta = delta - circle_end
-        linear_gen = None
-        if not linear_delta.is_zero():
-            logging.info("Moving additionally {} to finish circle command".
-                         format(linear_delta))
-            linear_gen = PulseGeneratorLinear(linear_delta, velocity)
-            self.__check_velocity(linear_gen.max_velocity())
         # do movements
         extruder_speed = self._get_extruder_speed(delta, velocity)
         self._start_extruder_move(delta.e, extruder_speed)
         hal.move(gen)
-        if linear_gen is not None:
-            hal.move(linear_gen)
         # save position
-        self._position = self._position + circle_end + linear_delta
+        self._position = self._position + delta
 
     def safe_zero(self, x=True, y=True, z=True):
         """ Move head to zero position safely.
