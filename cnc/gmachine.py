@@ -307,6 +307,7 @@ class GMachine(object):
         if extruder_id < 0 or extruder_id >= len(EXTRUDER_CONFIG):
             raise ValueError('invalid extruder id {}'.format(extruder_id))
         extruder = hal.get_extruder(extruder_id)
+        extruder.join()
         self._position.e = extruder.get_position()
         self._extruder_id = extruder_id
 
