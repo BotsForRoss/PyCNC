@@ -214,7 +214,6 @@ class GMachine(object):
 
     def _move_circular(self, delta, radius, velocity, direction):
         delta = delta.round_to_nearest_pulse()
-        radius = radius.round_to_nearest_pulse()
         self.__check_delta(delta)
         # get delta vector and put it on circle
         if self._plane == PLANE_XY:
@@ -235,6 +234,7 @@ class GMachine(object):
                                 self._position.x, TABLE_SIZE_Z_MM,
                                 TABLE_SIZE_X_MM, STEPPER_PULSES_PER_MM_Z,
                                 STEPPER_PULSES_PER_MM_X)
+        radius = radius.round_to_nearest_pulse()
         logging.info("Moving circularly {} {} {} with radius {}"
                      " and velocity {}".format(self._plane, delta,
                                                direction, radius, velocity))
