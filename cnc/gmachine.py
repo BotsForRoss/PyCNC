@@ -180,34 +180,36 @@ class GMachine(object):
         else:
             end_quarter = GMachine.__quarter(delta_a - radius_a, delta_b - radius_b)
         
+        if start_quarter == end_quarter:
+            return
+        
         # If the start and end points are not in the same quarter, there will be new maximum values that have to be checked against
         # boundry conditions
-        if start_quarter != end_quarter:
-            is_raise = False
-            quarter = start_quarter
+        is_raise = False
+        quarter = start_quarter
+        prev_quarter = quarter
+        for _ in range(4):
+            if direction == CW:
+                quarter -= 1
+                if quarter == 0: quarter = 4
+            else:
+                quarter += 1
+                if quarter == 5: quarter = 1
+
+            if (quarter == 1 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 1):
+                is_raise = (position_a + radius_a + radius > table_a)
+            elif (quarter == 1 and prev_quarter == 2) or (quarter == 2 and prev_quarter == 1):
+                is_raise = (position_b + radius_b + radius > table_b)
+            elif (quarter == 2 and prev_quarter == 3) or (quarter == 3 and prev_quarter == 2):
+                is_raise = (position_a + radius_a - radius < 0)
+            elif (quarter == 3 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 3):
+                is_raise = (position_b + radius_b - radius < 0)
+            if is_raise:
+                raise GMachineException("circle out of bounds")
+
+            if quarter == end_quarter:
+                break
             prev_quarter = quarter
-            for _ in range(4):
-                if direction == CW:
-                    quarter -= 1
-                    if quarter == 0: quarter = 4
-                else:
-                    quarter += 1
-                    if quarter == 5: quarter = 1
-
-                if (quarter == 1 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 1):
-                    is_raise = (position_a + radius_a + radius > table_a)
-                elif (quarter == 1 and prev_quarter == 2) or (quarter == 2 and prev_quarter == 1):
-                    is_raise = (position_b + radius_b + radius > table_b)
-                elif (quarter == 2 and prev_quarter == 3) or (quarter == 3 and prev_quarter == 2):
-                    is_raise = (position_a + radius_a - radius < 0)
-                elif (quarter == 3 and prev_quarter == 4) or (quarter == 4 and prev_quarter == 3):
-                    is_raise = (position_b + radius_b - radius < 0)
-                if is_raise:
-                    raise GMachineException("circle out of bounds")
-
-                if quarter == end_quarter:
-                    break
-                prev_quarter = quarter
 
 
     def _move_circular(self, delta, radius, velocity, direction):
