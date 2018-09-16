@@ -15,7 +15,7 @@ class TestServoMotor(unittest.TestCase):
         pwm = Mock()
         motor = ServoMotor(pwm, 10, 30, 10)
         motor._set_duty_cycle = Mock()
-        motor.set_speed(-.4)
+        motor.set(-.4)
         motor._set_duty_cycle.assert_called_once_with(26)
 
     def test_stop(self):

@@ -95,7 +95,7 @@ class Extruder(object):
         duration = delta / speed
 
         # Set the speed and set a timer for when to stop
-        self._motor.set_speed(self._speed / self._max_speed)
+        self._motor.set(self._speed / self._max_speed)
         self._set_time = time.time()
         self._timer = Timer(duration, self._stop)
         self._timer.start()

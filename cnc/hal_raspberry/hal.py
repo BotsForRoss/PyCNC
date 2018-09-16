@@ -6,6 +6,7 @@ from cnc.config import *
 from cnc.sensors import thermistor
 from cnc.actuators.servo_motor import ServoMotor
 from cnc.actuators.extruder import Extruder
+from cnc.actuators.gimbal import Gimbal, GimbalMotor
 
 US_IN_SECONDS = 1000000
 
@@ -18,8 +19,20 @@ STEP_PIN_MASK_X = 1 << STEPPER_STEP_PIN_X
 STEP_PIN_MASK_Y = 1 << STEPPER_STEP_PIN_Y
 STEP_PIN_MASK_Z = 1 << STEPPER_STEP_PIN_Z
 
-# will be populated in init()
-extruders = []
+extruders = [
+    Extruder(
+        ServoMotor(pwm, **extruder_config['servo']),
+        EXTRUDER_LENGTH_MM,
+        extruder_config['max_speed'] / 60.0
+    ) for extruder_config in EXTRUDER_CONFIG
+]
+
+gimbal = Gimbal(*[
+    GimbalMotor(
+        ServoMotor(pwm, **gimbal_config['servo']),
+        range = gimbal_config['range']
+    ) for gimbal_config in GIMBAL_CONFIG
+])
 
 
 def init():
@@ -36,25 +49,13 @@ def init():
     gpio.init(ENDSTOP_PIN_Z, rpgpio.GPIO.MODE_INPUT_PULLUP)
     gpio.init(STEPPERS_ENABLE_PIN, rpgpio.GPIO.MODE_OUTPUT)
     gpio.clear(STEPPERS_ENABLE_PIN)
-    watchdog.start()
 
-    # Also init the extruders
-    for extruder_config in EXTRUDER_CONFIG:
-        pin = extruder_config['pin']
+    # init servos used in extruders and gimbal
+    for pin in map(lambda c: c['servo']['pin'], EXTRUDER_CONFIG + GIMBAL_CONFIG):
         gpio.init(pin, rpgpio.GPIO.MODE_OUTPUT)
         gpio.clear(pin)
-        # TODO save the previous position and use that as initial position for convenience
-        extruder = Extruder(
-                ServoMotor(
-                    pwm,
-                    pin,
-                    extruder_config['duty_cycle_stop'],
-                    extruder_config['duty_cycle_range']
-                ),
-                EXTRUDER_LENGTH_MM,
-                extruder_config['max_speed'] / 60.0
-        )
-        extruders.append(extruder)
+
+    watchdog.start()
 
 
 def spindle_control(percent):
@@ -317,6 +318,9 @@ def join():
     for extruder in extruders:
         extruder.join()
 
+    # wait till the gimbal is done
+    gimbal.join()
+
     # wait till dma works
     while dma.is_active():
         time.sleep(0.01)
@@ -328,8 +332,8 @@ def deinit():
     join()
     disable_steppers()
     pwm.remove_all()
-    for extruder_config in EXTRUDER_CONFIG:
-        gpio.clear(extruder_config['pin'])
+    for pin in map(lambda c: c['servo']['pin'], EXTRUDER_CONFIG + GIMBAL_CONFIG):
+        gpio.clear(pin)
     watchdog.stop()
 
 

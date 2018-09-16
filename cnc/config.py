@@ -63,47 +63,78 @@ STEPPER_PULSE_LENGTH_US = 2
 STEPPER_MAX_ACCELERATION_MM_PER_S2 = 3000  # for all axis, mm per sec^2
 EXTRUDER_CONFIG = [
     {  # E0
-        'pin': 23,
+        'servo': {
+            'pin': 23,
+
+            # The percent duty cycle needed to stop the extruder
+            'duty_cycle_stop': 13.0,
+
+            # The percent duty cycle added or subtracted from 'duty_cycle_stop' to reach max speed
+            'duty_cycle_range': 9.0
+        },
 
         # This was measured without paint
-        'max_speed': 75,  # mm/min
-
-        # The percent duty cycle needed to stop the extruder
-        'duty_cycle_stop': 13.0,
-
-        # The percent duty cycle added or subtracted from 'duty_cycle_stop' to reach max speed
-        'duty_cycle_range': 9.0
+        'max_speed': 75  # mm/min
     },
     {  # E1
-        'pin': 22,
-        'max_speed': 75,
-        'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 9.0
+        'servo': {
+            'pin': 22,
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'max_speed': 75
     },
     {  # E2
-        'pin': 27,
-        'max_speed': 75,
-        'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 9.0
+        'servo': {
+            'pin': 27,
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'max_speed': 75
     },
     {  # E3
-        'pin': 18,
-        'max_speed': 75,
-        'duty_cycle_stop': 13.2,
-        'duty_cycle_range': 9.0
+        'servo': {
+            'pin': 18,
+            'duty_cycle_stop': 13.2,
+            'duty_cycle_range': 9.0
+        },
+        'max_speed': 75
     },
     {  # E4
-        'pin': 17,
-        'max_speed': 75,
-        'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 9.0
+        'servo': {
+            'pin': 17,
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'max_speed': 75
     },
     {  # E5
-        'pin': 4,
-        'max_speed': 75,
-        'duty_cycle_stop': 13.0,
-        'duty_cycle_range': 9.0
+        'servo': {
+            'pin': 4,
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'max_speed': 75
     },
+]
+
+GIMBAL_CONFIG = [
+    {  # A axis
+        'servo': {
+            'pin': -1,  # TODO
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'range': 180.0,  # angular range in degrees
+    },
+    {  # B axis
+        'servo': {
+            'pin': -1,  # TODO
+            'duty_cycle_stop': 13.0,
+            'duty_cycle_range': 9.0
+        },
+        'range': 180.0,  # angular range in degrees
+    }
 ]
 
 # Unused mixed settings (left to keep tests passing)

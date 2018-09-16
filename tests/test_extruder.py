@@ -17,7 +17,7 @@ class TestExtruder(unittest.TestCase):
         self.extruder.set_position(10, 100, wait=True)
         pos = self.extruder.get_position()
         self.assertLess(abs(pos - 10), EXTRUDER_ERROR_TOLERANCE)
-        self.motor.set_speed.assert_called_once_with(1)
+        self.motor.set.assert_called_once_with(1)
         self.motor.stop.assert_called_once_with()
 
 

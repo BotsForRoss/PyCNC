@@ -2,6 +2,7 @@ from __future__ import division
 import time
 
 from cnc.actuators.extruder import Extruder
+from cnc.actuators.gimbal import Gimbal, GimbalMotor
 from cnc.pulses import *
 from cnc.config import *
 
@@ -21,7 +22,7 @@ class MockServo:
     def stop(self):
         pass
 
-    def set_speed(self, speed):
+    def set(self, value):
         pass
 
 extruders = [
@@ -31,6 +32,13 @@ extruders = [
         config['max_speed'] / 60.0
     ) for config in EXTRUDER_CONFIG
 ]
+
+gimbal = Gimbal(*[
+    GimbalMotor(
+        MockServo(),
+        range=gimbal_config['range']
+    ) for gimbal_config in GIMBAL_CONFIG
+])
 
 
 def init():

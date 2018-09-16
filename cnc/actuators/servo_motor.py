@@ -1,6 +1,6 @@
 class ServoMotor(object):
     """
-    Control a servo motor using DMA and track the approximate position
+    Control a servo motor using DMA.
     This class could be used for any servo, but we use this one: https://www.adafruit.com/product/154
     """
 
@@ -9,8 +9,8 @@ class ServoMotor(object):
         Arguments:
             pwm {DMAPWM} -- a DMAPWM object
             pin {int} -- the GPIO pin to control this servo
-            duty_cycle_stop {float} -- the percent duty cycle to make the motor stop
-            duty_cycle_range {float} -- the percent duty cycle added to duty_cycle_stop to reach max speed
+            duty_cycle_stop {float} -- the percent duty cycle to hold the motor at its neutral speed (stopped) or angle
+            duty_cycle_range {float} -- the percent duty cycle added to duty_cycle_stop to reach max speed or angle
         """
         self._pwm = pwm
         self._pin = pin
@@ -24,18 +24,19 @@ class ServoMotor(object):
         """
         self._pwm.add_pin(self._pin, duty_cycle)
 
-    def set_speed(self, speed):
+    def set(self, value):
         """
-        Set the speed of the servo motor
+        Set the servo motor. This may set the speed or angle depending on the servo motor.
 
         Arguments:
-            speed {float} -- a speed from -1 to 1 relative to the full speed of the servo motor
+            value {float} -- a value from -1 to 1. A value of -1 will set the motor to its minimum duty cycle, and 1
+                will set to the maximum duty cycle.
         """
-        duty_cycle = self._duty_cycle_mid + self._duty_cycle_delta * speed
+        duty_cycle = self._duty_cycle_mid + self._duty_cycle_delta * value
         self._set_duty_cycle(duty_cycle)
 
     def stop(self):
         """
-        Remove the servo's pin from DMAPWM. This is not the same as setting the speed to zero.
+        Remove the servo's pin from DMAPWM. This is not the same as setting the value to zero.
         """
         self._pwm.remove_pin(self._pin)
