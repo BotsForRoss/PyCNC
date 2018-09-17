@@ -331,6 +331,7 @@ def deinit():
     """
     join()
     disable_steppers()
+    gimbal.release()
     pwm.remove_all()
     for pin in map(lambda c: c['servo']['pin'], EXTRUDER_CONFIG + GIMBAL_CONFIG):
         gpio.clear(pin)

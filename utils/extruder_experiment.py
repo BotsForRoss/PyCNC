@@ -22,7 +22,7 @@ if __name__ == '__main__':
     if args.pin:
         pin = args.pin
     else:
-        pin = EXTRUDER_CONFIG[args.id]['pin']
+        pin = EXTRUDER_CONFIG[args.id]['servo']['pin']
     duty = args.duty
 
     motor = ServoMotor(pwm, pin, 0, 0)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         pass
     finally:
         motor.stop()
-    
+
         pwm.remove_all()
         gpio.clear(pin)
 
