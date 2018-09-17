@@ -73,6 +73,16 @@ class GCode(object):
         k = self.get('K', default.z, multiply)
         return Coordinates(i, j, k, 0)
 
+    def angular_coordinates(self, *default):
+        """ Get an angular coordinates from parameters A, B, and C.
+        :param default: Default values, if any axis is not specified.
+        :return: value for each axis in a list. The number of axes is taken from the number of default parameters.
+        """
+        axes = ['A', 'B', 'C']
+        if len(default) > len(axes):
+            raise ValueError('Too many rotational axes')
+        return [self.get(axes[i], default[i]) for i in range(len(default))]
+
     def command(self):
         """ Get value from gcode line.
         :return: String with command or None if no command specified.

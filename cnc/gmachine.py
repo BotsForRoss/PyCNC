@@ -25,6 +25,7 @@ class GMachine(object):
         """ Initialization.
         """
         self._position = Coordinates(0.0, 0.0, 0.0, 0.0)
+        self._angular_position = hal.gimbal.get_position()
         # init variables
         self._velocity = 0
         self._local = None
@@ -278,6 +279,16 @@ class GMachine(object):
         hal.join()
         return self._position
 
+    def angular_position(self):
+        """ Return current machine gimbal position (after the latest command)
+            Note that hal might still be moving the gimbal and in this case
+            function will block until the gimbal stops.
+            This function for tests only.
+            :return current angular position as a list
+        """
+        hal.join()
+        return list(self._angular_position)
+
     def plane(self):
         """ Return current plane for circular interpolation. This function for
             tests only.
@@ -311,6 +322,11 @@ class GMachine(object):
         self._position.e = extruder.get_position()
         self._extruder_id = extruder_id
 
+    def _move_gimbal(self, angular_setpoint):
+        if angular_setpoint != self._angular_position:
+            hal.gimbal.set_position(*angular_setpoint)
+            self._angular_position = angular_setpoint
+
     def do_command(self, gcode):
         """ Perform action.
         :param gcode: GCode object which represent one gcode line
@@ -330,10 +346,14 @@ class GMachine(object):
                                       self._convertCoordinates)
             coord = coord + self._local
             delta = coord - self._position
+            angular_setpoint = gcode.angular_coordinates(*self._angular_position)
         else:
             delta = gcode.coordinates(Coordinates(0.0, 0.0, 0.0, 0.0),
                                       self._convertCoordinates)
             # coord = self._position + delta
+            angular_setpoint = gcode.angular_coordinates(*[0 for _ in self._angular_position])
+            for i, angle in enumerate(self._angular_position):
+                angular_setpoint[i] += angle
         velocity = gcode.get('F', self._velocity)
         radius = gcode.radius(Coordinates(0.0, 0.0, 0.0, 0.0),
                               self._convertCoordinates)
@@ -366,12 +386,16 @@ class GMachine(object):
                     if v < vl:
                         vl = v
             self._move_linear(delta, vl)
+            self._move_gimbal(angular_setpoint)
         elif c == 'G1':  # linear interpolation
             self._move_linear(delta, velocity)
+            self._move_gimbal(angular_setpoint)
         elif c == 'G2':  # circular interpolation, clockwise
             self._move_circular(delta, radius, velocity, CW)
+            self._move_gimbal(angular_setpoint)
         elif c == 'G3':  # circular interpolation, counterclockwise
             self._move_circular(delta, radius, velocity, CCW)
+            self._move_gimbal(angular_setpoint)
         elif c == 'G4':  # delay in s
             if not gcode.has('P'):
                 raise GMachineException("P is not specified")

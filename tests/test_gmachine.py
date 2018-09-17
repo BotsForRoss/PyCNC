@@ -12,6 +12,7 @@ class TestGMachine(unittest.TestCase):
     def setUp(self):
         Pid.FIX_TIME_S = 0.01
         Heater.LOOP_INTERVAL_S = 0.001
+        hal.gimbal.set_position(0, 0)
 
     def tearDown(self):
         pass
@@ -50,8 +51,9 @@ class TestGMachine(unittest.TestCase):
     # Test gcode commands.
     def test_g0_g1(self):
         m = GMachine()
-        m.do_command(GCode.parse_line("G0 X10 Y10 Z11"))
+        m.do_command(GCode.parse_line("G0 X10 Y10 Z11 A20 B-50"))
         self.assertEqual(m.position(), Coordinates(10, 10, 11, 0))
+        self.assertEqual(m.angular_position(), [20, -50])
         m.do_command(GCode.parse_line("G0 X3 Y2 Z1 E2"))
         self.assertEqual(m.position(), Coordinates(3, 2, 1, 2))
         m.do_command(GCode.parse_line("G1 X1 Y2 Z3 E4"))
@@ -99,11 +101,11 @@ class TestGMachine(unittest.TestCase):
 
     def test_g2_g3(self):
         m = GMachine()
-        
+
         # Tests for invalid feed rate
         self.assertRaises(GMachineException,
                           m.do_command, GCode.parse_line("G3 I1 J1 F-1"))
-        
+
         # Tests for invalid radii on all planes
         m.do_command(GCode.parse_line("G19"))
         self.assertRaises(GMachineException,
@@ -114,28 +116,28 @@ class TestGMachine(unittest.TestCase):
         m.do_command(GCode.parse_line("G17"))
         self.assertRaises(GMachineException,
                           m.do_command, GCode.parse_line("G3 I0 J0 K1"))
-        
+
         # Tests for invalid end point
-        self.assertRaises(GMachineException, m.do_command, 
+        self.assertRaises(GMachineException, m.do_command,
                           GCode.parse_line("G2 X99999999 Y99999999 I49999999.5 J49999999.5"))
         self.assertRaises(GMachineException,
                           m.do_command,
                           GCode.parse_line("G2 X2 Y2 Z99999999 I1 J1"))
         self.assertEqual(m.position(), Coordinates(0, 0, 0, 0))
-        
+
         # Tests both start and end points are bounded but the circle is not
         self.assertRaises(GMachineException,
                           m.do_command, GCode.parse_line("G2 X4 Y4 I2 J2"))
         self.assertRaises(GMachineException,
                           m.do_command, GCode.parse_line("G3 X4 Y4 I2 J2"))
-        
+
         # Tests that a full circle can be drawn both clockwise and counterclockwise
         m.do_command(GCode.parse_line("G17"))
         m.do_command(GCode.parse_line("G1 X1"))
         m.do_command(GCode.parse_line("G2 J1"))
         m.do_command(GCode.parse_line("G3 J1"))
         self.assertEqual(m.position(), Coordinates(1, 0, 0, 0))
-        
+
         # Tests that each arc is properly considered and included
         # Q1
         m.do_command(GCode.parse_line("G1 X0 Y1"))
@@ -153,7 +155,7 @@ class TestGMachine(unittest.TestCase):
         m.do_command(GCode.parse_line("G1 X1 Y{}".format(TABLE_SIZE_Y_MM)))
         m.do_command(GCode.parse_line("G2 X0 Y{} I-1".format(TABLE_SIZE_Y_MM - 1)))
         m.do_command(GCode.parse_line("G3 X1 Y{} J1".format(TABLE_SIZE_Y_MM)))
-        
+
         # Tests that end points not on the defined circle raise an exception
         m.do_command(GCode.parse_line("G1 X0 Y0"))
         self.assertRaises(GMachineException,
@@ -191,15 +193,17 @@ class TestGMachine(unittest.TestCase):
     def test_g90_g91(self):
         m = GMachine()
         m.do_command(GCode.parse_line("G91"))
-        m.do_command(GCode.parse_line("X1 Y1 Z1 E1"))
-        m.do_command(GCode.parse_line("X1 Y1 Z1"))
+        m.do_command(GCode.parse_line("X1 Y1 Z1 E1 A1"))
+        m.do_command(GCode.parse_line("X1 Y1 Z1 A1"))
         m.do_command(GCode.parse_line("X1 Y1"))
         m.do_command(GCode.parse_line("X1"))
         self.assertEqual(m.position(), Coordinates(4, 3, 2, 1))
+        self.assertEqual(m.angular_position(), [2, 0])
         m.do_command(GCode.parse_line("X-1 Y-1 Z-1 E-1"))
         m.do_command(GCode.parse_line("G90"))
-        m.do_command(GCode.parse_line("X1 Y1 Z1 E1"))
+        m.do_command(GCode.parse_line("X1 Y1 Z1 E1 A1"))
         self.assertEqual(m.position(), Coordinates(1, 1, 1, 1))
+        self.assertEqual(m.angular_position(), [1, 0])
 
 if __name__ == '__main__':
     unittest.main()
